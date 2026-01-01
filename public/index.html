@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Snakes & Ladders</title>
+
+  <style>
+    :root { --bg:#0b0f14; --panel:#121a22; --muted:#7f93aa; --text:#e7eef7; --accent:#66d9ff; }
+    * { box-sizing:border-box; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    body { margin:0; background:var(--bg); color:var(--text); }
+
+    header {
+      padding:16px;
+      border-bottom:1px solid #1d2a38;
+      text-align:center;
+    }
+    header h1 { margin:0; font-size:18px; }
+
+    .wrap {
+      max-width:960px;
+      margin:0 auto;
+      padding:20px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:20px;
+    }
+
+    .panel {
+      background:var(--panel);
+      border:1px solid #1d2a38;
+      border-radius:14px;
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    h2 { margin:0 0 6px; font-size:16px; }
+
+    label { font-size:12px; color:var(--muted); }
+    input, button, select {
+      background:#0e141c;
+      color:var(--text);
+      border:1px solid #223244;
+      border-radius:10px;
+      padding:8px 10px;
+      outline:none;
+      width:100%;
+    }
+
+    button.primary {
+      background:#0d2630;
+      border-color:#2a5666;
+      cursor:pointer;
+    }
+
+    button.secondary {
+      background:#0e141c;
+      cursor:pointer;
+    }
+
+    button:disabled { opacity:.6; cursor:not-allowed; }
+
+    .muted { color:var(--muted); font-size:12px; }
+    .row { display:flex; gap:8px; }
+    .status { font-size:12px; min-height:16px; }
+
+    footer {
+      border-top:1px solid #1d2a38;
+      padding:10px;
+      text-align:center;
+      font-size:12px;
+      color:var(--muted);
+    }
+    footer a { color:var(--accent); text-decoration:none; }
+  </style>
+</head>
+
+<body>
+<header>
+  <h1>Snakes &amp; Ladders</h1>
+  <div class="muted">Create or join a game</div>
+</header>
+
+<div class="wrap">
+
+  <!-- CREATE GAME -->
+  <div class="panel">
+    <h2>Create Game</h2>
+
+    <label>Clan Name</label>
+    <input id="c_clan" placeholder="Sixth Degree" />
+
+    <label>Admin Password</label>
+    <input id="c_pass" type="password" placeholder="Used to edit the board" />
+
+    <label>Board Size</label>
+    <input id="c_size" type="number" min="10" max="500" value="30" />
+
+    <label>Start Time (optional)</label>
+    <input id="c_start" type="datetime-local" />
+
+    <label>End Time (optional)</label>
+    <input id="c_end" type="datetime-local" />
+
+    <button class="primary" id="createBtn">Create Game</button>
+    <div class="status muted" id="createStatus"></div>
+  </div>
+
+  <!-- JOIN GAME -->
+  <div class="panel">
+    <h2>Join Game</h2>
+
+    <label>Clan Name</label>
+    <input id="j_clan" placeholder="Sixth Degree" />
+
+    <button class="secondary" id="findGamesBtn">Find Games</button>
+
+    <label>Available Games</label>
+    <select id="gamesList" disabled>
+      <option value="">—</option>
+    </select>
+
+    <label>Game ID</label>
+    <input id="j_gameId" placeholder="game_..." />
+
+    <button class="primary" id="joinBtn">View Game</button>
+    <div class="status muted" id="joinStatus"></div>
+  </div>
+
+</div>
+
+<footer>
+  For support visit <a href="https://discord.gg/6Degree" target="_blank">Discord.gg/6Degree</a>
+</footer>
+
+<script>
+  const el = (id) => document.getElementById(id);
+  const apiBase = ""; // same-origin
+
+  async function httpJson(method, url, body) {
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type":"application/json" },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    const txt = await res.text();
+    let data = null;
+    try { data = JSON.parse(txt); } catch {}
+    if (!res.ok) throw new Error(data?.error || txt || res.status);
+    return data;
+  }
+
+  // CREATE GAME
+  el("createBtn").onclick = async () => {
+    try {
+      el("createStatus").textContent = "Creating game...";
+      const body = {
+        clanName: el("c_clan").value.trim(),
+        hostPassword: el("c_pass").value,
+        boardSize: Number(el("c_size").value),
+        startsAt: el("c_start").value ? new Date(el("c_start").value).toISOString() : undefined,
+        endsAt: el("c_end").value ? new Date(el("c_end").value).toISOString() : undefined
+      };
+
+      const res = await httpJson("POST", apiBase + "/games", body);
+      window.location.href = `/editor.html?gameId=${encodeURIComponent(res.gameId)}`;
+    } catch (e) {
+      el("createStatus").textContent = "Error: " + e.message;
+    }
+  };
+
+  // FIND GAMES BY CLAN
+  el("findGamesBtn").onclick = async () => {
+    try {
+      el("joinStatus").textContent = "Searching...";
+      const clan = el("j_clan").value.trim();
+      const res = await httpJson("GET", apiBase + `/clans/${encodeURIComponent(clan)}/games`);
+      const sel = el("gamesList");
+      sel.innerHTML = '<option value="">—</option>';
+
+      res.games.forEach(g => {
+        const o = document.createElement("option");
+        o.value = g.id;
+        o.textContent = `${g.id} (${g.status})`;
+        sel.appendChild(o);
+      });
+
+      sel.disabled = false;
+      el("joinStatus").textContent = res.games.length ? "Select a game." : "No games found.";
+    } catch (e) {
+      el("joinStatus").textContent = "Error: " + e.message;
+    }
+  };
+
+  el("gamesList").onchange = () => {
+    el("j_gameId").value = el("gamesList").value;
+  };
+
+  // VIEW GAME
+  el("joinBtn").onclick = () => {
+    const gid = el("j_gameId").value.trim();
+    if (!gid) {
+      el("joinStatus").textContent = "Enter a Game ID.";
+      return;
+    }
+    window.location.href = `/viewer.html?gameId=${encodeURIComponent(gid)}`;
+  };
+</script>
+</body>
+</html>

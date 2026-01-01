@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Snakes & Ladders — Viewer</title>
+  <style>
+    :root { --bg:#0b0f14; --panel:#121a22; --muted:#7f93aa; --text:#e7eef7; --accent:#66d9ff; --danger:#ff5c5c; }
+    * { box-sizing: border-box; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    body { margin:0; background:var(--bg); color:var(--text); }
+    header { padding:12px 16px; border-bottom:1px solid #1d2a38; display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+    header h1 { margin:0; font-size:16px; letter-spacing:.2px; }
+
+    /* ✅ Teams (left) — Board (middle) — Tile Info (right) */
+    .wrap {
+      display:grid;
+      grid-template-columns: 340px 1fr 360px;
+      gap:12px;
+      padding:12px;
+    }
+
+    @media (max-width: 1100px) {
+      .wrap { grid-template-columns: 1fr; }
+    }
+
+    .panel { background:var(--panel); border:1px solid #1d2a38; border-radius:12px; padding:12px; }
+    .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    label { font-size:12px; color:var(--muted); display:block; margin-bottom:4px; }
+    input, select, button {
+      background:#0e141c; color:var(--text);
+      border:1px solid #223244; border-radius:10px;
+      padding:8px 10px; outline:none;
+    }
+    input[type="number"] { width:110px; }
+    button { cursor:pointer; }
+    button.primary { border-color:#2a5666; background:#0d2630; }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    code { background:#0e141c; border:1px solid #223244; padding:1px 6px; border-radius:8px; }
+
+    .grid { display:grid; grid-template-columns: repeat(var(--cols), minmax(34px, 1fr)); gap:6px; }
+    .tile {
+      border:1px solid #223244; border-radius:10px;
+      padding:8px 6px; text-align:center; font-size:12px;
+      background:#0e141c; cursor:pointer; user-select:none;
+      display:flex; flex-direction:column; gap:6px; align-items:center; justify-content:center;
+      aspect-ratio: 1 / 1;
+      min-height: 54px;
+    }
+    .tile .n { font-weight:800; }
+    .tile .k { font-size:10px; color:var(--muted); }
+    .tile.sel { outline:2px solid var(--accent); }
+
+    .badges { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+    .badge {
+      font-size:10px; padding:2px 6px; border-radius:999px;
+      border:1px solid #223244; color:var(--muted);
+      white-space: nowrap; overflow:hidden; text-overflow:ellipsis; max-width: 100%;
+    }
+    .badge.jump { border-color:#5b4a2a; color:#ffd48f; }
+    .badge.tag  { border-color:#324a2a; color:#c8ff9f; }
+    .badge.boss { border-color:#6a2a2a; color:#ffb0b0; }
+
+    .markers { display:flex; gap:4px; flex-wrap:wrap; justify-content:center; }
+    .dot {
+      width:12px; height:12px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.25);
+      box-shadow: 0 0 0 1px rgba(0,0,0,.35) inset;
+    }
+    .dot.proofwait { outline: 2px solid rgba(255,255,255,.25); }
+
+    .muted { color:var(--muted); font-size:12px; }
+    .small { font-size:11px; }
+    .hr { height:1px; background:#1d2a38; margin:10px 0; }
+
+    .pill {
+      border:1px solid #223244; border-radius:999px;
+      padding:6px 10px; font-size:12px; color:var(--muted);
+      display:flex; gap:8px; align-items:center;
+      background:#0e141c;
+    }
+    .pill b { color: var(--text); font-weight: 800; }
+
+    .copybox {
+      border:1px solid #223244; border-radius:12px;
+      padding:8px 10px;
+      background:#0e141c;
+      cursor: pointer;
+      user-select: none;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .copybox:hover { border-color:#2a5666; }
+    .copybox .url { color: var(--text); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .copybox .hint { color: var(--muted); font-size:11px; }
+
+    .preview {
+      width:100%; aspect-ratio: 1 / 1; border-radius:12px;
+      border:1px solid #223244; background:#0e141c;
+      display:flex; align-items:center; justify-content:center; overflow:hidden;
+    }
+    .preview img { width:100%; height:100%; object-fit:contain; display:block; }
+
+    .teamCard {
+      border:1px solid #223244; border-radius:12px;
+      background:#0e141c; padding:10px;
+    }
+    .teamTop {
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      cursor: pointer;
+    }
+    .teamLeft { display:flex; align-items:center; gap:10px; min-width:0; }
+    .teamName { font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .teamMeta { color:var(--muted); font-size:12px; }
+    .rightMeta { text-align:right; font-size:12px; color:var(--muted); }
+    .warn { color:#ffb0b0; }
+    .members {
+      margin-top:10px;
+      border-top:1px solid #1d2a38;
+      padding-top:10px;
+      display:none;
+    }
+    .members ul { margin:0; padding-left:18px; color:var(--text); }
+    .members li { margin:4px 0; }
+
+    footer {
+      border-top: 1px solid #1d2a38;
+      padding: 10px 16px;
+      color: var(--muted);
+      font-size: 12px;
+      display: flex;
+      justify-content: center;
+      text-align: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+
+<body>
+<header>
+  <h1 id="titleText">Snakes &amp; Ladders — Viewer</h1>
+
+  <div class="row" style="flex:1; min-width: 280px;">
+    <input id="apiBase" style="max-width:260px" type="text" placeholder="API Base (optional)" />
+    <input id="gameId" style="max-width:320px" type="text" placeholder="Game ID (game_...)" />
+    <button class="primary" id="loadBtn">Load</button>
+  </div>
+
+  <div class="row">
+    <div class="pill"><span>Status:</span> <b id="gameStatus">unknown</b></div>
+    <div class="pill"><span>Locked:</span> <b id="lockStatus">unknown</b></div>
+    <div class="pill"><span>Time:</span> <b id="timeStatus">—</b></div>
+  </div>
+
+  <div class="row" style="width:100%;">
+    <button class="primary" id="editorBtn">Create a game</button>
+
+    <div class="copybox" id="shareBox" title="Click to copy share link" style="flex:1; min-width: 260px; display:none;">
+      <div class="url" id="shareUrlText"></div>
+      <div class="hint" id="shareHint">click to copy</div>
+    </div>
+
+    <div class="muted small" id="statusText" style="width:100%;">Ready.</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- ✅ Teams LEFT -->
+  <div class="panel">
+    <div style="font-size:14px; font-weight:800;">Teams</div>
+    <div class="muted small">Click a team to expand RSNs. Double-click to jump to their tile.</div>
+    <div class="hr"></div>
+    <div id="teamsList" class="row" style="flex-direction:column; gap:10px;"></div>
+  </div>
+
+  <!-- ✅ Board MIDDLE -->
+  <div class="panel">
+    <div class="row" style="justify-content:space-between;">
+      <div class="row">
+        <div>
+          <label>Columns</label>
+          <input id="cols" type="number" min="5" max="40" value="10" />
+        </div>
+        <div>
+          <label>Auto Refresh</label>
+          <select id="refreshMode">
+            <option value="on" selected>on</option>
+            <option value="off">off</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <span class="muted small">Click tiles to view details.</span>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="muted small" id="gameMeta">Not loaded.</div>
+
+    <div style="margin-top:10px;">
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+
+  <!-- ✅ Tile Info RIGHT -->
+  <div class="panel">
+    <div style="font-size:14px; font-weight:800;">Tile Info</div>
+    <div class="muted small" id="tileSub">Click a tile.</div>
+
+    <div class="hr"></div>
+
+    <div class="preview" id="preview">
+      <span class="muted small">No image</span>
+    </div>
+
+    <div class="row" style="flex-direction:column; gap:10px; margin-top:10px;">
+      <div>
+        <div class="muted small">Title</div>
+        <div id="tileTitle" style="font-weight:800;">—</div>
+      </div>
+      <div>
+        <div class="muted small">Description</div>
+        <div id="tileDesc" class="small muted" style="white-space:pre-wrap;">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  For support visit
+  <a href="https://discord.gg/6Degree" target="_blank" rel="noreferrer">Discord.gg/6Degree</a>
+  or find <b>6_c</b> on <b>w620</b>.
+</footer>
+
+<script>
+  let boardResp = null;   // { board, locked, updatedAt }
+  let stateResp = null;   // { game, teams }
+  let selectedId = null;
+
+  let pollStateTimer = null;
+  let pollBoardTimer = null;
+  let tickTimer = null;
+
+  const el = (id) => document.getElementById(id);
+
+  const apiBaseEl = el("apiBase");
+  const gameIdEl = el("gameId");
+  const loadBtn = el("loadBtn");
+  const colsEl = el("cols");
+  const refreshModeEl = el("refreshMode");
+
+  const statusTextEl = el("statusText");
+  const titleTextEl = el("titleText");
+  const gameStatusEl = el("gameStatus");
+  const lockStatusEl = el("lockStatus");
+  const timeStatusEl = el("timeStatus");
+  const gameMetaEl = el("gameMeta");
+
+  const editorBtn = el("editorBtn");
+
+  const shareBox = el("shareBox");
+  const shareUrlText = el("shareUrlText");
+  const shareHint = el("shareHint");
+
+  const gridEl = el("grid");
+
+  const tileSubEl = el("tileSub");
+  const previewEl = el("preview");
+  const tileTitleEl = el("tileTitle");
+  const tileDescEl = el("tileDesc");
+
+  const teamsListEl = el("teamsList");
+
+  function setStatus(msg) { statusTextEl.textContent = msg; }
+
+  function apiBase() {
+    const v = (apiBaseEl.value || "").trim();
+    return v ? v.replace(/\/+$/, "") : "";
+  }
+
+  function getGameId() {
+    return (gameIdEl.value || "").trim();
+  }
+
+  function endpoint(path) {
+    const base = apiBase();
+    return (base ? base : "") + path;
+  }
+
+  function qsGet(name) {
+    const u = new URL(window.location.href);
+    return u.searchParams.get(name);
+  }
+
+  function httpJson(method, url, body, headers = {}) {
+    const opts = { method, headers: { "Content-Type":"application/json", ...headers }, cache:"no-store" };
+    if (body !== undefined) opts.body = JSON.stringify(body);
+    return fetch(url, opts).then(async (res) => {
+      const txt = await res.text();
+      let data = null;
+      try { data = txt ? JSON.parse(txt) : null; } catch {}
+      if (!res.ok) {
+        const msg = (data && (data.error || data.message)) ? (data.error || data.message) : (txt || ("HTTP " + res.status));
+        throw new Error(msg);
+      }
+      return data;
+    });
+  }
+
+  function safeLower(s) { return (s || "").toString().toLowerCase(); }
+
+  function escapeHtml(s) {
+    return (s || "").toString()
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+
+  function defaultTileFor(index, boardSize) {
+    if (index === 0) return { id:index, type:"start", title:"Start", description:"", requiresProof:false };
+    if (index === boardSize) return { id:index, type:"finish", title:"Finish", description:"", requiresProof:false };
+    return { id:index, type:"task", title:"", description:"", requiresProof:true };
+  }
+
+  function getBoardSize() {
+    const g = stateResp?.game;
+    const b = boardResp?.board;
+    return Number((b && b.boardSize) || (g && g.boardSize) || 0);
+  }
+
+  function getBoardTile(index) {
+    const b = boardResp?.board;
+    const size = getBoardSize();
+    if (!b || !Array.isArray(b.tiles)) return defaultTileFor(index, size);
+
+    const hit = b.tiles.find(t => Number(t.id) === Number(index));
+    if (hit) return hit;
+
+    return defaultTileFor(index, size);
+  }
+
+  function isJumpTile(tile) {
+    return safeLower(tile?.type) === "jump";
+  }
+
+  function resolveImageSrc(tile) {
+    const imgValue = (tile?.image || "").toString().trim();
+    if (!imgValue) return "";
+    if (/^https?:\/\//i.test(imgValue)) return imgValue;
+    const basePath = ((boardResp?.board?.tilesBasePath) || "tiles").toString().replace(/\/+$/,"");
+    return `${basePath}/${imgValue}`;
+  }
+
+  function tileBadges(tile) {
+    const badges = [];
+    if (isJumpTile(tile)) badges.push({ cls:"jump", text:"jump" });
+
+    const cat = (tile?.category || "").toString().trim();
+    if (cat) {
+      const cls = safeLower(cat) === "boss" ? "boss" : "tag";
+      badges.push({ cls, text: cat });
+    }
+    return badges;
+  }
+
+  function teamsOnTile(index) {
+    const teams = stateResp?.teams || [];
+    return teams.filter(t => Number(t.position) === Number(index));
+  }
+
+  function fmtDuration(ms) {
+    if (ms <= 0) return "0s";
+    const s = Math.floor(ms / 1000);
+    const d = Math.floor(s / 86400);
+    const h = Math.floor((s % 86400) / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const ss = s % 60;
+    if (d > 0) return `${d}d ${h}h ${m}m`;
+    if (h > 0) return `${h}h ${m}m ${ss}s`;
+    if (m > 0) return `${m}m ${ss}s`;
+    return `${ss}s`;
+  }
+
+  function computeTimeStatus() {
+    const g = stateResp?.game;
+    if (!g) return { label: "—", meta: "" };
+
+    const now = Date.now();
+    const startsAt = g.startsAt ? Date.parse(g.startsAt) : null;
+    const endsAt = g.endsAt ? Date.parse(g.endsAt) : null;
+
+    if (startsAt && now < startsAt) {
+      const rem = fmtDuration(startsAt - now);
+      return { label: `starts in ${rem}`, meta: `Starts at: <b>${escapeHtml(g.startsAt)}</b>` };
+    }
+
+    if (endsAt) {
+      if (now >= endsAt) return { label: "ended", meta: `Ended at: <b>${escapeHtml(g.endsAt)}</b>` };
+      const rem = fmtDuration(endsAt - now);
+      return { label: `${rem} left`, meta: `Ends at: <b>${escapeHtml(g.endsAt)}</b>` };
+    }
+
+    return { label: "live", meta: "" };
+  }
+
+  function renderHeaderMeta() {
+    const g = stateResp?.game;
+
+    gameStatusEl.textContent = g?.status || "unknown";
+    lockStatusEl.textContent =
+      boardResp?.locked === true ? "LOCKED" :
+      boardResp?.locked === false ? "UNLOCKED" : "unknown";
+
+    const t = computeTimeStatus();
+    timeStatusEl.textContent = t.label;
+
+    if (!g) {
+      titleTextEl.textContent = "Snakes & Ladders — Viewer";
+      gameMetaEl.textContent = "Not loaded.";
+      return;
+    }
+
+    const size = Number(g.boardSize);
+    const clan = g.clanName || "";
+    titleTextEl.textContent = `${clan} — Snakes & Ladders`;
+
+    const metaBits = [
+      `Clan: <b>${escapeHtml(clan)}</b>`,
+      `Board size: <b>${size}</b>`
+    ];
+    if (t.meta) metaBits.push(t.meta);
+
+    gameMetaEl.innerHTML = metaBits.join(" • ");
+  }
+
+  function renderGrid() {
+    const size = getBoardSize();
+    if (!size) { gridEl.innerHTML = ""; return; }
+
+    gridEl.style.setProperty("--cols", String(Number(colsEl.value) || 10));
+    gridEl.innerHTML = "";
+
+    for (let i = 0; i <= size; i++) {
+      const tile = getBoardTile(i);
+
+      const div = document.createElement("div");
+      div.className = "tile" + (selectedId === i ? " sel" : "");
+      div.onclick = () => selectTile(i);
+
+      const n = document.createElement("div");
+      n.className = "n";
+      n.textContent = i;
+
+      const k = document.createElement("div");
+      k.className = "k";
+      k.textContent = safeLower(tile.type || "");
+
+      div.appendChild(n);
+      div.appendChild(k);
+
+      const badges = tileBadges(tile);
+      if (badges.length) {
+        const bwrap = document.createElement("div");
+        bwrap.className = "badges";
+        for (const b of badges) {
+          const s = document.createElement("span");
+          s.className = "badge " + b.cls;
+          s.textContent = b.text;
+          bwrap.appendChild(s);
+        }
+        div.appendChild(bwrap);
+      }
+
+      const onTile = teamsOnTile(i);
+      if (onTile.length) {
+        const mwrap = document.createElement("div");
+        mwrap.className = "markers";
+        for (const t of onTile) {
+          const dot = document.createElement("span");
+          dot.className = "dot" + (t.awaitingProof ? " proofwait" : "");
+          dot.title = `${t.name} (${t.awaitingProof ? "awaiting proof" : "ready"})`;
+          dot.style.background = t.color || "#ffffff";
+          mwrap.appendChild(dot);
+        }
+        div.appendChild(mwrap);
+      }
+
+      gridEl.appendChild(div);
+    }
+  }
+
+  function renderTilePanel() {
+    const size = getBoardSize();
+    if (selectedId === null || !size) {
+      tileSubEl.textContent = "Click a tile.";
+      previewEl.innerHTML = '<span class="muted small">No image</span>';
+      tileTitleEl.textContent = "—";
+      tileDescEl.textContent = "—";
+      return;
+    }
+
+    const tile = getBoardTile(selectedId);
+    tileSubEl.textContent = `Tile ${selectedId}`;
+
+    const title = (tile?.title || "").toString().trim();
+    const desc  = (tile?.description || "").toString().trim();
+    tileTitleEl.textContent = title || "(no title)";
+    tileDescEl.textContent = desc || "(no description)";
+
+    const src = resolveImageSrc(tile);
+    if (src) {
+      previewEl.innerHTML = "";
+      const img = document.createElement("img");
+      img.referrerPolicy = "no-referrer";
+      img.src = src;
+      img.onerror = () => { previewEl.innerHTML = '<span class="muted small">Image failed to load</span>'; };
+      previewEl.appendChild(img);
+    } else {
+      previewEl.innerHTML = '<span class="muted small">No image</span>';
+    }
+  }
+
+  function renderTeams() {
+    const teams = stateResp?.teams || [];
+    teamsListEl.innerHTML = "";
+
+    if (!teams.length) {
+      const d = document.createElement("div");
+      d.className = "muted small";
+      d.textContent = "No teams loaded.";
+      teamsListEl.appendChild(d);
+      return;
+    }
+
+    for (const t of teams) {
+      const card = document.createElement("div");
+      card.className = "teamCard";
+
+      const top = document.createElement("div");
+      top.className = "teamTop";
+
+      const left = document.createElement("div");
+      left.className = "teamLeft";
+
+      const dot = document.createElement("span");
+      dot.className = "dot" + (t.awaitingProof ? " proofwait" : "");
+      dot.style.background = t.color || "#ffffff";
+      dot.title = t.name;
+
+      const nameWrap = document.createElement("div");
+      nameWrap.style.minWidth = "0";
+
+      const name = document.createElement("div");
+      name.className = "teamName";
+      name.textContent = t.name;
+
+      const meta = document.createElement("div");
+      meta.className = "teamMeta";
+      meta.textContent = `Tile ${t.position}` + (t.awaitingProof ? ` • awaiting proof (pending ${t.pendingTile ?? t.position})` : "");
+
+      nameWrap.appendChild(name);
+      nameWrap.appendChild(meta);
+
+      left.appendChild(dot);
+      left.appendChild(nameWrap);
+
+      const right = document.createElement("div");
+      right.className = "rightMeta";
+      right.innerHTML = t.awaitingProof ? `<span class="warn">awaiting proof</span>` : `<span class="muted">ready</span>`;
+
+      top.appendChild(left);
+      top.appendChild(right);
+
+      const members = document.createElement("div");
+      members.className = "members";
+
+      const list = document.createElement("ul");
+      const rsns = Array.isArray(t.members) ? t.members : [];
+      if (rsns.length === 0) {
+        const li = document.createElement("li");
+        li.className = "muted";
+        li.textContent = "(no members registered yet)";
+        list.appendChild(li);
+      } else {
+        for (const rsn of rsns) {
+          const li = document.createElement("li");
+          li.textContent = rsn;
+          list.appendChild(li);
+        }
+      }
+      members.appendChild(list);
+
+      top.onclick = () => {
+        members.style.display = (members.style.display === "block") ? "none" : "block";
+      };
+
+      card.appendChild(top);
+      card.appendChild(members);
+
+      card.ondblclick = () => {
+        selectedId = Number(t.position);
+        renderGrid();
+        renderTilePanel();
+      };
+
+      teamsListEl.appendChild(card);
+    }
+  }
+
+  function renderShareLink() {
+    const gid = getGameId();
+    if (!gid) {
+      shareBox.style.display = "none";
+      return;
+    }
+
+    const u = new URL(window.location.href);
+    u.searchParams.set("gameId", gid);
+    shareUrlText.textContent = u.toString();
+    shareBox.style.display = "flex";
+
+    shareBox.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(u.toString());
+        shareHint.textContent = "copied!";
+        setTimeout(() => (shareHint.textContent = "click to copy"), 1200);
+      } catch {
+        shareHint.textContent = "copy failed";
+        setTimeout(() => (shareHint.textContent = "click to copy"), 1200);
+      }
+    };
+  }
+
+  function renderEditorButton() {
+    const gid = getGameId();
+    if (!gid) {
+      editorBtn.textContent = "Create a game";
+      editorBtn.onclick = () => { window.location.href = "/editor.html"; };
+      return;
+    }
+    editorBtn.textContent = "Edit board";
+    editorBtn.onclick = () => { window.location.href = `/editor.html?gameId=${encodeURIComponent(gid)}`; };
+  }
+
+  function renderAll() {
+    renderHeaderMeta();
+    renderShareLink();
+    renderEditorButton();
+    renderTeams();
+    renderGrid();
+    renderTilePanel();
+  }
+
+  function selectTile(id) {
+    selectedId = id;
+    renderGrid();
+    renderTilePanel();
+  }
+
+  async function loadBoardOnce(gameId) {
+    const url = endpoint(`/games/${encodeURIComponent(gameId)}/board`);
+    const data = await httpJson("GET", url);
+    boardResp = data || null;
+  }
+
+  async function loadStateOnce(gameId) {
+    const url = endpoint(`/games/${encodeURIComponent(gameId)}/state`);
+    const data = await httpJson("GET", url);
+    stateResp = data || null;
+  }
+
+  async function fullLoad() {
+    const gid = getGameId();
+    if (!gid) { setStatus("Enter Game ID."); return; }
+
+    try {
+      setStatus("Loading board + state...");
+      await Promise.all([loadBoardOnce(gid), loadStateOnce(gid)]);
+      selectedId = 0;
+      renderAll();
+      setStatus("Loaded.");
+    } catch (e) {
+      console.error(e);
+      setStatus("Load failed: " + (e?.message || String(e)));
+    }
+  }
+
+  function stopPolling() {
+    if (pollStateTimer) clearInterval(pollStateTimer);
+    if (pollBoardTimer) clearInterval(pollBoardTimer);
+    if (tickTimer) clearInterval(tickTimer);
+    pollStateTimer = null;
+    pollBoardTimer = null;
+    tickTimer = null;
+  }
+
+  function startPolling() {
+    stopPolling();
+    if (refreshModeEl.value === "off") return;
+
+    // tick timer (for countdown display)
+    tickTimer = setInterval(() => {
+      renderHeaderMeta();
+    }, 1000);
+
+    pollStateTimer = setInterval(async () => {
+      const gid = getGameId();
+      if (!gid) return;
+      try {
+        await loadStateOnce(gid);
+        renderHeaderMeta();
+        renderGrid();
+        renderTeams();
+      } catch {}
+    }, 2000);
+
+    pollBoardTimer = setInterval(async () => {
+      const gid = getGameId();
+      if (!gid) return;
+      try {
+        const prevUpdated = boardResp?.updatedAt || null;
+        await loadBoardOnce(gid);
+        const nextUpdated = boardResp?.updatedAt || null;
+        if (prevUpdated !== nextUpdated) renderAll();
+        else renderHeaderMeta();
+      } catch {}
+    }, 15000);
+  }
+
+  // INIT
+  const qpGameId = qsGet("gameId");
+  if (qpGameId) gameIdEl.value = qpGameId;
+
+  apiBaseEl.value = ""; // same-origin
+  renderEditorButton();
+
+  loadBtn.onclick = async () => {
+    await fullLoad();
+    startPolling();
+  };
+
+  refreshModeEl.onchange = () => startPolling();
+  colsEl.onchange = () => renderGrid();
+
+  if (qpGameId) {
+    fullLoad().then(() => startPolling());
+  } else {
+    setStatus("Ready. Enter a Game ID and click Load.");
+  }
+</script>
+</body>
+</html>
