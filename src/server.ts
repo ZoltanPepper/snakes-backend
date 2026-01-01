@@ -10,6 +10,7 @@ import { rollRoute } from "./routes/roll.js";
 import { stateRoute } from "./routes/state.js";
 import { proofRoute } from "./routes/proof.js";
 import { boardRoutes } from "./routes/board.js"; // ✅ keep .js for ESM consistency
+import overlayRoute from "./routes/overlay.js"; // ✅ NEW
 
 async function main() {
   const app = Fastify({ logger: true });
@@ -41,6 +42,7 @@ async function main() {
   await stateRoute(app, { db });
   await proofRoute(app, { db, persist });
   await boardRoutes(app, { db, persist });
+  await overlayRoute(app, { db }); // ✅ NEW
 
   // Print all registered routes once everything is loaded.
   // This is the fastest way to prove whether POST /games/:gameId/proof exists.
