@@ -107,17 +107,11 @@
 <div class="wrap">
   <!-- LEFT: Game + Tile Edit -->
   <div class="panel">
-    <div style="font-size:14px; font-weight:800;">Game</div>
+    <div style="font-size:14px; font-weight:800;">Game Setup</div>
     <div class="muted small">Editor never shows Join Code (only Index does).</div>
     <div class="hr"></div>
 
-    <div class="muted small">Game ID (click box to copy)</div>
-
-    <div class="copybox" id="gameIdCopyBox" title="Click to copy Game ID" style="margin-top:8px;">
-      <div class="url mono" id="gameIdCopyText">—</div>
-      <div class="hint" id="gameIdCopyHint">click to copy</div>
-    </div>
-
+    <div class="muted small">Game ID</div>
     <div class="inline" style="margin-top:8px">
       <input id="gameIdOut" class="mono" readonly />
       <button id="copyGameId" class="primary">Copy</button>
@@ -260,10 +254,6 @@
   const openViewer = el("openViewer");
   const openIndex = el("openIndex");
 
-  const gameIdCopyBox = el("gameIdCopyBox");
-  const gameIdCopyText = el("gameIdCopyText");
-  const gameIdCopyHint = el("gameIdCopyHint");
-
   const colsEl = el("cols");
   const tilesBasePathEl = el("tilesBasePath");
 
@@ -355,9 +345,6 @@
 
     const gid = getGameId();
     titleTextEl.textContent = gid ? `Snakes & Ladders — Editor (${gid})` : "Snakes & Ladders — Editor";
-
-    // gameId copy box
-    gameIdCopyText.textContent = gid ? gid : "—";
 
     if (!boardResp?.board){
       gameMetaEl.textContent = "Not loaded.";
@@ -508,13 +495,6 @@
     openIndexTop.onclick = goIndex;
     openViewerTop.onclick = goViewer;
 
-    gameIdCopyBox.onclick = async () => {
-      const gid2 = getGameId();
-      if (!gid2) return;
-      const ok = await copyText(gid2);
-      gameIdCopyHint.textContent = ok ? "copied!" : "copy failed";
-      setTimeout(() => (gameIdCopyHint.textContent = "click to copy"), 1200);
-    };
   }
 
   // ---------- events ----------
@@ -639,4 +619,3 @@
 </script>
 </body>
 </html>
-
