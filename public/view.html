@@ -154,7 +154,10 @@
   </div>
 
   <div class="row" style="width:100%;">
-    <button class="primary" id="editorBtn">Create a game</button>
+    <!-- ✅ changed: Create now goes to index -->
+    <button class="primary" id="editorBtn">Create / Set Up</button>
+    <button id="openEditorBtn" disabled>Open Editor</button>
+    <button id="backIndexBtn">Back to Index</button>
 
     <div class="copybox" id="shareBox" title="Click to copy share link" style="flex:1; min-width: 260px; display:none;">
       <div class="url" id="shareUrlText"></div>
@@ -260,6 +263,8 @@
   const gameMetaEl = el("gameMeta");
 
   const editorBtn = el("editorBtn");
+  const openEditorBtn = el("openEditorBtn");
+  const backIndexBtn = el("backIndexBtn");
 
   const shareBox = el("shareBox");
   const shareUrlText = el("shareUrlText");
@@ -633,21 +638,29 @@
     };
   }
 
-  function renderEditorButton() {
+  function renderEditorButtons() {
     const gid = getGameId();
-    if (!gid) {
-      editorBtn.textContent = "Create a game";
-      editorBtn.onclick = () => { window.location.href = "/editor.html"; };
-      return;
-    }
-    editorBtn.textContent = "Edit board";
-    editorBtn.onclick = () => { window.location.href = `/editor.html?gameId=${encodeURIComponent(gid)}`; };
+
+    // Create/Set Up always goes to index (your requirement)
+    editorBtn.textContent = "Create / Set Up";
+    editorBtn.onclick = () => { window.location.href = "/index.html"; };
+
+    // Open editor only when we have a gameId
+    openEditorBtn.disabled = !gid;
+    openEditorBtn.onclick = () => {
+      const g = getGameId();
+      if (!g) return;
+      window.location.href = `/editor.html?gameId=${encodeURIComponent(g)}`;
+    };
+
+    // Back to index always available
+    backIndexBtn.onclick = () => { window.location.href = "/index.html"; };
   }
 
   function renderAll() {
     renderHeaderMeta();
     renderShareLink();
-    renderEditorButton();
+    renderEditorButtons();
     renderTeams();
     renderGrid();
     renderTilePanel();
@@ -734,7 +747,7 @@
   if (qpGameId) gameIdEl.value = qpGameId;
 
   apiBaseEl.value = ""; // same-origin
-  renderEditorButton();
+  renderEditorButtons();
 
   loadBtn.onclick = async () => {
     await fullLoad();

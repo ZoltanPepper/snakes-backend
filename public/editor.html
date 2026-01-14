@@ -3,14 +3,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Snakes & Ladders Board Builder</title>
+  <title>Snakes & Ladders — Editor</title>
   <style>
     :root { --bg:#0b0f14; --panel:#121a22; --muted:#7f93aa; --text:#e7eef7; --accent:#66d9ff; --danger:#ff5c5c; }
     * { box-sizing: border-box; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
     body { margin:0; background:var(--bg); color:var(--text); }
+
     header { padding:12px 16px; border-bottom:1px solid #1d2a38; display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
     header h1 { margin:0; font-size:16px; letter-spacing:.2px; }
-    .wrap { display:grid; grid-template-columns: 1fr 380px; gap:12px; padding:12px; }
+
+    .wrap {
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:12px;
+      padding:12px;
+    }
+    @media (max-width: 1100px) { .wrap { grid-template-columns: 1fr; } }
+
     .panel { background:var(--panel); border:1px solid #1d2a38; border-radius:12px; padding:12px; }
     .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     label { font-size:12px; color:var(--muted); display:block; margin-bottom:4px; }
@@ -19,44 +28,30 @@
       border:1px solid #223244; border-radius:10px;
       padding:8px 10px; outline:none;
     }
-    textarea { width:100%; min-height:92px; resize:vertical; }
-    input[type="number"] { width:110px; }
-    input[type="text"] { width:100%; }
+    textarea { width:100%; min-height:90px; resize:vertical; }
     button { cursor:pointer; }
     button.primary { border-color:#2a5666; background:#0d2630; }
-    button.danger { border-color:#6a2a2a; background:#2a0d0d; }
     button:disabled { opacity:.5; cursor:not-allowed; }
+    .muted { color:var(--muted); font-size:12px; }
+    .small { font-size:11px; }
+    .hr { height:1px; background:#1d2a38; margin:10px 0; }
+
+    .inline { display:flex; gap:8px; }
+    .inline > * { flex:1; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
 
     .grid { display:grid; grid-template-columns: repeat(var(--cols), minmax(34px, 1fr)); gap:6px; }
     .tile {
       border:1px solid #223244; border-radius:10px;
       padding:8px 6px; text-align:center; font-size:12px;
       background:#0e141c; cursor:pointer; user-select:none;
-      display:flex; flex-direction:column; gap:4px; align-items:center; justify-content:center;
-      min-height:46px;
+      display:flex; flex-direction:column; gap:6px; align-items:center; justify-content:center;
+      aspect-ratio: 1 / 1;
+      min-height: 54px;
     }
-    .tile .n { font-weight:700; }
+    .tile .n { font-weight:800; }
     .tile .k { font-size:10px; color:var(--muted); }
     .tile.sel { outline:2px solid var(--accent); }
-    .badge { font-size:10px; padding:2px 6px; border-radius:999px; border:1px solid #223244; color:var(--muted); }
-    .badge.proof { border-color:#2a5666; color:#9fe9ff; }
-    .badge.jump { border-color:#5b4a2a; color:#ffd48f; }
-    .badge.tag { border-color:#324a2a; color:#c8ff9f; }
-
-    .kv { display:grid; grid-template-columns: 1fr; gap:10px; margin-top:10px; }
-    .muted { color:var(--muted); font-size:12px; }
-    .hr { height:1px; background:#1d2a38; margin:10px 0; }
-
-    .preview {
-      width:100%; aspect-ratio: 1 / 1; border-radius:12px;
-      border:1px solid #223244; background:#0e141c;
-      display:flex; align-items:center; justify-content:center; overflow:hidden;
-    }
-    .preview img { width:100%; height:100%; object-fit:cover; display:block; }
-    .small { font-size:11px; }
-    .top-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    .top-controls input[type="text"] { width: 260px; max-width: 80vw; }
-    code { background:#0e141c; border:1px solid #223244; padding:1px 6px; border-radius:8px; }
 
     .pill {
       border:1px solid #223244; border-radius:999px;
@@ -64,98 +59,98 @@
       display:flex; gap:8px; align-items:center;
       background:#0e141c;
     }
-    .pill b { color: var(--text); font-weight: 700; }
-    .mini { width: 170px; }
-    .mini2 { width: 240px; }
-    .grow { flex: 1; min-width: 220px; }
+    .pill b { color: var(--text); font-weight: 800; }
 
-    footer {
-      border-top: 1px solid #1d2a38;
-      padding: 10px 16px;
-      color: var(--muted);
-      font-size: 12px;
-      display: flex;
-      justify-content: center;
-      text-align: center;
+    .copybox {
+      border:1px solid #223244; border-radius:12px;
+      padding:8px 10px;
+      background:#0e141c;
+      cursor: pointer;
+      user-select: none;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
     }
-    footer a {
-      color: var(--accent);
-      text-decoration: none;
+    .copybox:hover { border-color:#2a5666; }
+    .copybox .url { color: var(--text); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .copybox .hint { color: var(--muted); font-size:11px; }
+
+    .preview {
+      width:100%; aspect-ratio: 1 / 1; border-radius:12px;
+      border:1px solid #223244; background:#0e141c;
+      display:flex; align-items:center; justify-content:center; overflow:hidden;
     }
-    footer a:hover { text-decoration: underline; }
+    .preview img { width:100%; height:100%; object-fit:contain; display:block; }
   </style>
 </head>
 
 <body>
 <header>
-  <h1>Snakes & Ladders Board Builder</h1>
+  <h1 id="titleText">Snakes &amp; Ladders — Editor</h1>
 
-  <!-- SERVER / OPTION B CONTROLS -->
-  <div class="top-controls">
-    <input id="apiBase" class="mini2" type="text" placeholder="API Base (optional)" />
-    <input id="gameId" class="mini2" type="text" placeholder="Game ID (game_...)" />
-    <input id="hostPassword" class="mini" type="text" placeholder="Host Password" />
-
-    <button class="primary" id="serverLoadBtn" title="Load current board from backend">Load Server</button>
-    <button class="primary" id="serverSaveBtn" title="Save current board to backend (requires host password)">Save Server</button>
-    <button id="lockBtn" title="Lock the board against edits">Lock</button>
-    <button id="unlockBtn" title="Unlock board edits">Unlock</button>
+  <div class="row" style="flex:1; min-width: 280px;">
+    <input id="apiBase" style="max-width:320px" type="text" placeholder="API Base (optional)" />
+    <input id="gameId" style="max-width:360px" type="text" placeholder="Game ID (game_...)" />
+    <button class="primary" id="loadBtn">Load</button>
   </div>
 
-  <!-- OPTIONAL: load from URL for seeding -->
-  <div class="top-controls">
-    <input id="boardUrl" class="grow" type="text" placeholder="Optional: seed from board.json URL" />
-    <button class="primary" id="loadBtn">Load URL</button>
+  <div class="row">
+    <div class="pill"><span>Locked:</span> <b id="lockStatus">unknown</b></div>
+    <div class="pill"><span>Updated:</span> <b id="updatedStatus">—</b></div>
   </div>
 
-  <span class="pill" id="lockPill"><span>Lock:</span> <b id="lockState">unknown</b></span>
-  <span class="muted small" id="status">Ready.</span>
+  <div class="row" style="width:100%;">
+    <button class="primary" id="openIndexTop">Back to Index</button>
+    <button class="primary" id="openViewerTop">Open Viewer</button>
+    <div class="muted small" id="statusText" style="width:100%;">Ready.</div>
+  </div>
 </header>
 
 <div class="wrap">
+  <!-- LEFT: Game + Tile Edit -->
   <div class="panel">
-    <div class="row" style="justify-content:space-between;">
-      <div class="row">
-        <div>
-          <label>Board Size</label>
-          <input id="boardSize" type="number" min="1" max="500" value="30" />
-        </div>
-        <div>
-          <label>Columns</label>
-          <input id="cols" type="number" min="5" max="40" value="10" />
-        </div>
-        <div>
-          <label>Tiles Base Path</label>
-          <input id="tilesBasePath" type="text" value="tiles" />
-        </div>
-      </div>
+    <div style="font-size:14px; font-weight:800;">Game</div>
+    <div class="muted small">Editor never shows Join Code (only Index does).</div>
+    <div class="hr"></div>
 
-      <div class="row">
-        <button id="applySizeBtn" class="primary">Apply Size</button>
-        <button id="autoImagesBtn">Auto Image Names</button>
-      </div>
+    <div class="muted small">Game ID (click box to copy)</div>
+
+    <div class="copybox" id="gameIdCopyBox" title="Click to copy Game ID" style="margin-top:8px;">
+      <div class="url mono" id="gameIdCopyText">—</div>
+      <div class="hint" id="gameIdCopyHint">click to copy</div>
+    </div>
+
+    <div class="inline" style="margin-top:8px">
+      <input id="gameIdOut" class="mono" readonly />
+      <button id="copyGameId" class="primary">Copy</button>
+    </div>
+
+    <div class="inline" style="margin-top:10px">
+      <button id="openViewer">Open Board Viewer</button>
+      <button id="openIndex">Back to Index</button>
     </div>
 
     <div class="hr"></div>
 
-    <div class="muted small">
-      Click a tile to edit. Tiles not in <code>tiles[]</code> are still valid.
-      Use <b>jump</b> + <b>jumpTo</b> for snakes/ladders.
-    </div>
-
-    <div style="margin-top:10px;">
-      <div class="grid" id="grid"></div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <div class="row" style="justify-content:space-between;">
-      <div>
-        <div style="font-size:14px; font-weight:700;">Tile Editor</div>
-        <div class="muted small" id="tileSub">No tile selected.</div>
+    <div style="font-size:14px; font-weight:800;">Board</div>
+    <div class="row" style="margin-top:8px">
+      <div style="flex:1">
+        <label>Columns</label>
+        <input id="cols" type="number" min="5" max="40" value="10" />
       </div>
-      <button class="danger" id="deleteTileBtn" disabled>Delete Override</button>
+      <div style="flex:1">
+        <label>Tiles Base Path</label>
+        <input id="tilesBasePath" placeholder="tiles" />
+      </div>
     </div>
+
+    <div class="row" style="margin-top:10px">
+      <button class="primary" id="saveBtn">Save Board</button>
+      <button id="toggleLockBtn">Toggle Lock</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <div style="font-size:14px; font-weight:800;">Tile</div>
+    <div class="muted small" id="tileSub">Click a tile to edit.</div>
 
     <div class="hr"></div>
 
@@ -163,270 +158,231 @@
       <span class="muted small">No image</span>
     </div>
 
-    <div class="kv">
-      <div>
-        <label>Type</label>
-        <select id="type">
-          <option value="start">start</option>
+    <div class="row" style="margin-top:10px">
+      <div style="flex:1">
+        <label>Index</label>
+        <input id="t_id" class="mono" readonly />
+      </div>
+      <div style="flex:1">
+        <label>Kind</label>
+        <select id="t_type">
           <option value="task">task</option>
           <option value="jump">jump</option>
-          <option value="finish">finish</option>
-          <option value="empty">empty</option>
           <option value="boss">boss</option>
+          <option value="empty">empty</option>
+          <option value="start">start</option>
+          <option value="finish">finish</option>
         </select>
-        <div class="muted small">Boss can be a tile <b>type</b> or use Category = <b>boss</b> (both work).</div>
       </div>
+    </div>
 
-      <div>
+    <div style="margin-top:10px">
+      <label>Title</label>
+      <input id="t_title" placeholder="e.g. Vorkath Unique" />
+    </div>
+
+    <div style="margin-top:10px">
+      <label>Description</label>
+      <textarea id="t_desc" placeholder="Tile instructions..."></textarea>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div style="flex:1">
         <label>Category (optional)</label>
-        <input id="category" type="text" placeholder="boss / pvm / skilling / clue / meme ..." />
+        <input id="t_cat" placeholder="boss / skilling / meme..." />
       </div>
-
-      <div>
+      <div style="flex:1">
         <label>Requires Proof</label>
-        <select id="requiresProof">
-          <option value="auto">auto (task/boss=true, others=false)</option>
-          <option value="true">true</option>
+        <select id="t_proof">
+          <option value="true" selected>true</option>
           <option value="false">false</option>
         </select>
       </div>
+    </div>
 
-      <div id="jumpWrap" style="display:none;">
-        <label>jumpTo</label>
-        <input id="jumpTo" type="number" min="0" max="500" />
+    <div class="row" style="margin-top:10px">
+      <div style="flex:1">
+        <label>Jump To (only for jump)</label>
+        <input id="t_jumpTo" type="number" placeholder="e.g. 42" />
       </div>
+      <div style="flex:1">
+        <label>Image (url or filename)</label>
+        <input id="t_img" placeholder="ranger_boots.png OR https://..." />
+      </div>
+    </div>
 
+    <div class="row" style="margin-top:10px">
+      <button class="primary" id="applyTileBtn">Apply Tile</button>
+      <button id="resetTileBtn">Reset Tile</button>
+    </div>
+  </div>
+
+  <!-- RIGHT: Grid -->
+  <div class="panel">
+    <div class="row" style="justify-content:space-between;">
       <div>
-        <label>Title</label>
-        <input id="title" type="text" />
+        <div style="font-size:14px; font-weight:800;">Board Grid</div>
+        <div class="muted small" id="gameMeta">Not loaded.</div>
       </div>
-
-      <div>
-        <label>Description</label>
-        <textarea id="description"></textarea>
-      </div>
-
-      <div>
-        <label>Image (filename or full URL)</label>
-        <input id="image" type="text" placeholder="e.g. 12.png or https://..." />
-        <div class="muted small">If it starts with <code>http</code>, we use it directly. Otherwise we use Tiles Base Path.</div>
-      </div>
-
-      <div class="row" style="justify-content:space-between;">
-        <button class="primary" id="saveTileBtn" disabled>Save Override</button>
-        <button id="clonePrevBtn" disabled>Clone Previous</button>
+      <div class="row">
+        <span class="muted small">Click tiles to edit.</span>
       </div>
     </div>
 
     <div class="hr"></div>
 
-    <div class="muted small">
-      <b>Hotlinking note:</b> Some sites block image embedding. If a URL won’t preview here, it may still be fine for your backend/plugin.
-      Safest is storing images in your GitHub Pages <code>/tiles</code> folder.
-    </div>
+    <div class="grid" id="grid"></div>
   </div>
 </div>
 
-<footer>
-  For support visit <a href="https://discord.gg/6Degree" target="_blank" rel="noreferrer">Discord.gg/6Degree</a>
-  &nbsp;or find <b>6_c</b> on <b>w620</b>.
-</footer>
-
 <script>
-  // -------------------- MODEL --------------------
-  let board = {
-    schemaVersion: 1,
-    id: "6degree-board",
-    title: "6Degree Snakes & Ladders",
-    description: "Complete tasks, submit proof, climb ladders, avoid snakes.",
-    boardSize: 30,
-    tilesBasePath: "tiles",
-    tiles: [
-      { id: 0, type: "start", title: "Start", description: "Begin your journey.", image: "0.png", requiresProof: false },
-      { id: 30, type: "finish", title: "Finish", description: "End of the board.", image: "30.png", requiresProof: false }
-    ]
-  };
-
+  // ---------- state ----------
+  let boardResp = null;   // { board, locked, updatedAt }
   let selectedId = null;
-  let serverLocked = null; // true/false/null
 
-  // -------------------- DOM --------------------
   const el = (id) => document.getElementById(id);
-  const statusEl = el("status");
-  const gridEl = el("grid");
 
-  // server controls
   const apiBaseEl = el("apiBase");
   const gameIdEl = el("gameId");
-  const hostPasswordEl = el("hostPassword");
-  const serverLoadBtn = el("serverLoadBtn");
-  const serverSaveBtn = el("serverSaveBtn");
-  const lockBtn = el("lockBtn");
-  const unlockBtn = el("unlockBtn");
-
-  const lockStateEl = el("lockState");
-
-  // url controls (optional)
-  const boardUrlEl = el("boardUrl");
   const loadBtn = el("loadBtn");
 
-  // board controls
-  const boardSizeEl = el("boardSize");
+  const titleTextEl = el("titleText");
+  const statusTextEl = el("statusText");
+  const lockStatusEl = el("lockStatus");
+  const updatedStatusEl = el("updatedStatus");
+  const gameMetaEl = el("gameMeta");
+
+  const openIndexTop = el("openIndexTop");
+  const openViewerTop = el("openViewerTop");
+
+  const gameIdOut = el("gameIdOut");
+  const copyGameId = el("copyGameId");
+  const openViewer = el("openViewer");
+  const openIndex = el("openIndex");
+
+  const gameIdCopyBox = el("gameIdCopyBox");
+  const gameIdCopyText = el("gameIdCopyText");
+  const gameIdCopyHint = el("gameIdCopyHint");
+
   const colsEl = el("cols");
   const tilesBasePathEl = el("tilesBasePath");
-  const applySizeBtn = el("applySizeBtn");
-  const autoImagesBtn = el("autoImagesBtn");
 
-  // tile editor controls
+  const saveBtn = el("saveBtn");
+  const toggleLockBtn = el("toggleLockBtn");
+
   const tileSubEl = el("tileSub");
-  const deleteTileBtn = el("deleteTileBtn");
   const previewEl = el("preview");
-  const typeEl = el("type");
-  const categoryEl = el("category");
-  const requiresProofEl = el("requiresProof");
-  const jumpWrapEl = el("jumpWrap");
-  const jumpToEl = el("jumpTo");
-  const titleEl = el("title");
-  const descriptionEl = el("description");
-  const imageEl = el("image");
-  const saveTileBtn = el("saveTileBtn");
-  const clonePrevBtn = el("clonePrevBtn");
 
-  // -------------------- HELPERS --------------------
-  function setStatus(msg) { statusEl.textContent = msg; }
+  const t_id = el("t_id");
+  const t_type = el("t_type");
+  const t_title = el("t_title");
+  const t_desc = el("t_desc");
+  const t_cat = el("t_cat");
+  const t_proof = el("t_proof");
+  const t_jumpTo = el("t_jumpTo");
+  const t_img = el("t_img");
 
-  function apiBase() {
+  const applyTileBtn = el("applyTileBtn");
+  const resetTileBtn = el("resetTileBtn");
+
+  const gridEl = el("grid");
+
+  function setStatus(msg){ statusTextEl.textContent = msg; }
+
+  function apiBase(){
     const v = (apiBaseEl.value || "").trim();
     return v ? v.replace(/\/+$/, "") : "";
   }
 
-  function boardEndpoint() {
-    const gid = (gameIdEl.value || "").trim();
-    if (!gid) return null;
+  function getGameId(){
+    return (gameIdEl.value || "").trim();
+  }
+
+  function endpoint(path){
     const base = apiBase();
-    return (base ? base : "") + `/games/${encodeURIComponent(gid)}/board`;
+    return (base ? base : "") + path;
   }
 
-  function setLockUI(locked) {
-    serverLocked = locked;
-    if (locked === true) lockStateEl.textContent = "LOCKED";
-    else if (locked === false) lockStateEl.textContent = "UNLOCKED";
-    else lockStateEl.textContent = "unknown";
-
-    const isLocked = locked === true;
-
-    serverSaveBtn.disabled = isLocked;
-    lockBtn.disabled = isLocked;
-    unlockBtn.disabled = !isLocked;
-
-    const disableEditor = isLocked;
-    applySizeBtn.disabled = disableEditor;
-    autoImagesBtn.disabled = disableEditor;
-
-    const hasSel = selectedId !== null;
-    saveTileBtn.disabled = disableEditor || !hasSel;
-    deleteTileBtn.disabled = disableEditor || !hasSel || !getTileOverride(selectedId);
-    clonePrevBtn.disabled = disableEditor || !hasSel || selectedId === 0;
-
-    typeEl.disabled = disableEditor;
-    categoryEl.disabled = disableEditor;
-    requiresProofEl.disabled = disableEditor;
-    jumpToEl.disabled = disableEditor;
-    titleEl.disabled = disableEditor;
-    descriptionEl.disabled = disableEditor;
-    imageEl.disabled = disableEditor;
+  function qsGet(name){
+    const u = new URL(window.location.href);
+    return u.searchParams.get(name);
   }
 
-  function getTileOverride(id) {
-    return board.tiles.find(t => Number(t.id) === Number(id)) || null;
-  }
-
-  function deleteTileOverride(id) {
-    board.tiles = board.tiles.filter(t => Number(t.id) !== Number(id));
-  }
-
-  function upsertTileOverride(tile) {
-    deleteTileOverride(tile.id);
-    board.tiles.push(tile);
-    normalizeBoard();
-  }
-
-  function defaultTypeFor(id) {
-    if (id === 0) return "start";
-    if (id === Number(board.boardSize)) return "finish";
-    return "task";
-  }
-
-  function autoRequiresProof(type) {
-    const t = (type || "").toLowerCase();
-    return t === "task" || t === "boss";
-  }
-
-  function normalizeBoard() {
-    board.schemaVersion = 1;
-    board.boardSize = Number(board.boardSize);
-    board.tilesBasePath = (board.tilesBasePath || "tiles").toString();
-    if (!Array.isArray(board.tiles)) board.tiles = [];
-
-    board.tiles = board.tiles
-      .filter(t => Number.isFinite(Number(t.id)) && Number(t.id) >= 0 && Number(t.id) <= board.boardSize)
-      .sort((a,b) => Number(a.id) - Number(b.id));
-
-    if (!getTileOverride(0)) board.tiles.push({ id: 0, type: "start", title: "Start", description: "", image: "0.png", requiresProof: false });
-    if (!getTileOverride(board.boardSize)) board.tiles.push({ id: board.boardSize, type: "finish", title: "Finish", description: "", image: board.boardSize + ".png", requiresProof: false });
-
-    board.tiles.sort((a,b) => Number(a.id) - Number(b.id));
-  }
-
-  function getTileEffective(id) {
-    const o = getTileOverride(id);
-    if (o) return o;
-    const type = defaultTypeFor(id);
-    return { id, type, title:"", description:"", image:"", requiresProof: autoRequiresProof(type) };
-  }
-
-  function resolveImageSrc(imgValue) {
-    const img = (imgValue || "").trim();
-    if (!img) return "";
-    if (/^https?:\/\//i.test(img)) return img;
-    const base = (board.tilesBasePath || "tiles").replace(/\/+$/,"");
-    return `${base}/${img}`;
-  }
-
-  function tileKindForBadge(tile) {
-    const type = (tile?.type || "").toLowerCase();
-    if (type === "jump") return "jump";
-    if (tile?.requiresProof === true || autoRequiresProof(type)) return "proof";
-    return "none";
-  }
-
-  function safeJsonClone(obj) {
-    return JSON.parse(JSON.stringify(obj));
-  }
-
-  async function httpJson(method, url, body, headers = {}) {
+  function httpJson(method, url, body, headers = {}){
     const opts = { method, headers: { "Content-Type":"application/json", ...headers }, cache:"no-store" };
     if (body !== undefined) opts.body = JSON.stringify(body);
-    const res = await fetch(url, opts);
-    const txt = await res.text();
-    let data = null;
-    try { data = txt ? JSON.parse(txt) : null; } catch {}
-    if (!res.ok) {
-      const msg = (data && (data.error || data.message)) ? (data.error || data.message) : (txt || ("HTTP " + res.status));
-      throw new Error(msg);
-    }
-    return data;
+    return fetch(url, opts).then(async (res) => {
+      const txt = await res.text();
+      let data = null;
+      try { data = txt ? JSON.parse(txt) : null; } catch {}
+      if (!res.ok) {
+        const msg = (data && (data.error || data.message)) ? (data.error || data.message) : (txt || ("HTTP " + res.status));
+        throw new Error(msg);
+      }
+      return data;
+    });
   }
 
-  // -------------------- RENDER --------------------
-  function renderGrid() {
+  function safeLower(s){ return (s || "").toString().toLowerCase(); }
+
+  function defaultTileFor(index, boardSize){
+    if (index === 0) return { id:index, type:"start", title:"Start", description:"", requiresProof:false };
+    if (index === boardSize) return { id:index, type:"finish", title:"Finish", description:"", requiresProof:false };
+    return { id:index, type:"task", title:"", description:"", requiresProof:true };
+  }
+
+  function boardSize(){
+    return Number(boardResp?.board?.boardSize || 0);
+  }
+
+  function getBoardTile(index){
+    const b = boardResp?.board;
+    const size = boardSize();
+    if (!b || !Array.isArray(b.tiles)) return defaultTileFor(index, size);
+
+    const hit = b.tiles.find(t => Number(t.id) === Number(index));
+    if (hit) return hit;
+
+    return defaultTileFor(index, size);
+  }
+
+  function setHeaderMeta(){
+    lockStatusEl.textContent =
+      boardResp?.locked === true ? "LOCKED" :
+      boardResp?.locked === false ? "UNLOCKED" : "unknown";
+
+    updatedStatusEl.textContent = boardResp?.updatedAt ? String(boardResp.updatedAt) : "—";
+
+    const gid = getGameId();
+    titleTextEl.textContent = gid ? `Snakes & Ladders — Editor (${gid})` : "Snakes & Ladders — Editor";
+
+    // gameId copy box
+    gameIdCopyText.textContent = gid ? gid : "—";
+
+    if (!boardResp?.board){
+      gameMetaEl.textContent = "Not loaded.";
+      return;
+    }
+    gameMetaEl.textContent = `Board size: ${boardSize()} • Tiles: ${(boardResp.board.tiles || []).length}`;
+  }
+
+  function resolveImageSrc(tile){
+    const imgValue = (tile?.image || "").toString().trim();
+    if (!imgValue) return "";
+    if (/^https?:\/\//i.test(imgValue)) return imgValue;
+    const basePath = ((boardResp?.board?.tilesBasePath) || "tiles").toString().replace(/\/+$/,"");
+    return `${basePath}/${imgValue}`;
+  }
+
+  function renderGrid(){
+    const size = boardSize();
+    if (!size) { gridEl.innerHTML = ""; return; }
+
     gridEl.style.setProperty("--cols", String(Number(colsEl.value) || 10));
     gridEl.innerHTML = "";
 
-    const size = Number(board.boardSize);
-    for (let i = 0; i <= size; i++) {
-      const t = getTileEffective(i);
-      const kind = tileKindForBadge(t);
+    for (let i=0; i<=size; i++){
+      const tile = getBoardTile(i);
 
       const div = document.createElement("div");
       div.className = "tile" + (selectedId === i ? " sel" : "");
@@ -438,45 +394,37 @@
 
       const k = document.createElement("div");
       k.className = "k";
-      k.textContent = (t.type || "").toLowerCase();
-
-      const badges = document.createElement("div");
-      badges.className = "row";
-      badges.style.gap = "6px";
-      badges.style.justifyContent = "center";
-
-      if (kind === "proof") {
-        const b = document.createElement("span");
-        b.className = "badge proof";
-        b.textContent = "proof";
-        badges.appendChild(b);
-      }
-      if (kind === "jump") {
-        const b = document.createElement("span");
-        b.className = "badge jump";
-        b.textContent = "jump";
-        badges.appendChild(b);
-      }
-
-      const cat = (t.category || "").toString().trim();
-      if (cat) {
-        const b = document.createElement("span");
-        b.className = "badge tag";
-        b.textContent = cat;
-        badges.appendChild(b);
-      }
+      k.textContent = safeLower(tile.type || "");
 
       div.appendChild(n);
       div.appendChild(k);
-      if (badges.childNodes.length) div.appendChild(badges);
-
       gridEl.appendChild(div);
     }
   }
 
-  function renderPreviewFromFieldValue() {
-    const src = resolveImageSrc(imageEl.value);
-    if (src) {
+  function renderTileEditor(){
+    const size = boardSize();
+    if (selectedId === null || !size){
+      tileSubEl.textContent = "Click a tile to edit.";
+      previewEl.innerHTML = '<span class="muted small">No image</span>';
+      t_id.value = "";
+      return;
+    }
+
+    const tile = getBoardTile(selectedId);
+    tileSubEl.textContent = `Editing tile ${selectedId}`;
+
+    t_id.value = String(selectedId);
+    t_type.value = String(tile.type || "task");
+    t_title.value = String(tile.title || "");
+    t_desc.value = String(tile.description || "");
+    t_cat.value = String(tile.category || "");
+    t_proof.value = (tile.requiresProof === false) ? "false" : "true";
+    t_jumpTo.value = (tile.jumpTo === null || tile.jumpTo === undefined) ? "" : String(tile.jumpTo);
+    t_img.value = String(tile.image || "");
+
+    const src = resolveImageSrc(tile);
+    if (src){
       previewEl.innerHTML = "";
       const img = document.createElement("img");
       img.referrerPolicy = "no-referrer";
@@ -488,300 +436,207 @@
     }
   }
 
-  function renderEditor() {
-    const id = selectedId;
-    const o = (id === null) ? null : getTileOverride(id);
-    const t = (id === null) ? null : getTileEffective(id);
-
-    const hasSel = id !== null;
-
-    saveTileBtn.disabled = !hasSel;
-    clonePrevBtn.disabled = !hasSel || id === 0;
-    deleteTileBtn.disabled = !hasSel || !o;
-
-    if (!hasSel) {
-      tileSubEl.textContent = "No tile selected.";
-      previewEl.innerHTML = '<span class="muted small">No image</span>';
-      return;
-    }
-
-    tileSubEl.textContent = `Editing tile ${id} (override: ${o ? "YES" : "NO"})`;
-
-    const type = (o?.type ?? t.type ?? "task").toLowerCase();
-    typeEl.value = type;
-
-    categoryEl.value = (o?.category ?? t.category ?? "");
-
-    const req = o?.requiresProof;
-    if (typeof req === "boolean") requiresProofEl.value = String(req);
-    else requiresProofEl.value = "auto";
-
-    jumpWrapEl.style.display = (type === "jump") ? "block" : "none";
-    const jv = (o?.jumpTo ?? "");
-    jumpToEl.value = (jv === null || jv === undefined) ? "" : String(jv);
-
-    titleEl.value = (o?.title ?? t.title ?? "");
-    descriptionEl.value = (o?.description ?? t.description ?? "");
-    imageEl.value = (o?.image ?? t.image ?? "");
-
-    renderPreviewFromFieldValue();
-  }
-
-  function renderAll() {
-    boardSizeEl.value = String(board.boardSize);
-    tilesBasePathEl.value = String(board.tilesBasePath || "tiles");
-    renderGrid();
-    renderEditor();
-    setLockUI(serverLocked);
-  }
-
-  function selectTile(id) {
+  function selectTile(id){
     selectedId = id;
-    renderAll();
+    renderGrid();
+    renderTileEditor();
   }
 
-  // -------------------- LOCAL ACTIONS --------------------
-  applySizeBtn.onclick = () => {
-    if (serverLocked === true) return;
+  function ensureBoardTilesArray(){
+    if (!boardResp || !boardResp.board) return;
+    if (!Array.isArray(boardResp.board.tiles)) boardResp.board.tiles = [];
+  }
 
-    const n = Number(boardSizeEl.value);
-    if (!Number.isFinite(n) || n < 1 || n > 500) {
-      setStatus("Invalid board size (1..500).");
-      return;
+  function upsertTile(tile){
+    ensureBoardTilesArray();
+    const tiles = boardResp.board.tiles;
+    const idx = tiles.findIndex(t => Number(t.id) === Number(tile.id));
+    if (idx >= 0) tiles[idx] = tile;
+    else tiles.push(tile);
+  }
+
+  function deleteTile(index){
+    ensureBoardTilesArray();
+    const tiles = boardResp.board.tiles;
+    const idx = tiles.findIndex(t => Number(t.id) === Number(index));
+    if (idx >= 0) tiles.splice(idx, 1);
+  }
+
+  async function loadBoardOnce(gameId){
+    const url = endpoint(`/games/${encodeURIComponent(gameId)}/board`);
+    boardResp = await httpJson("GET", url);
+  }
+
+  async function saveBoardOnce(gameId){
+    const url = endpoint(`/games/${encodeURIComponent(gameId)}/board`);
+    // server expects { board: {...} }
+    await httpJson("PUT", url, { board: boardResp.board });
+  }
+
+  async function toggleLockOnce(gameId){
+    const url = endpoint(`/games/${encodeURIComponent(gameId)}/board/lock`);
+    const out = await httpJson("POST", url, {});
+    if (out && typeof out.locked === "boolean") boardResp.locked = out.locked;
+  }
+
+  function goIndex(){ location.href = "index.html"; }
+
+  function goViewer(){
+    const gid = getGameId();
+    if (!gid) return goIndex();
+    location.href = "view.html?gameId=" + encodeURIComponent(gid);
+  }
+
+  async function copyText(value){
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch {
+      return false;
     }
-    board.boardSize = n;
-    board.tilesBasePath = tilesBasePathEl.value.trim() || "tiles";
-    normalizeBoard();
-    if (selectedId !== null && selectedId > board.boardSize) selectedId = null;
-    setStatus("Board size applied.");
-    renderAll();
+  }
+
+  function wireNavButtons(){
+    const gid = getGameId();
+    gameIdOut.value = gid;
+
+    copyGameId.onclick = () => copyText(gid);
+
+    openIndex.onclick = goIndex;
+    openViewer.onclick = goViewer;
+
+    openIndexTop.onclick = goIndex;
+    openViewerTop.onclick = goViewer;
+
+    gameIdCopyBox.onclick = async () => {
+      const gid2 = getGameId();
+      if (!gid2) return;
+      const ok = await copyText(gid2);
+      gameIdCopyHint.textContent = ok ? "copied!" : "copy failed";
+      setTimeout(() => (gameIdCopyHint.textContent = "click to copy"), 1200);
+    };
+  }
+
+  // ---------- events ----------
+  loadBtn.onclick = async () => {
+    const gid = getGameId();
+    if (!gid) return setStatus("Enter Game ID.");
+
+    try {
+      setStatus("Loading...");
+      await loadBoardOnce(gid);
+
+      // sync UI defaults
+      colsEl.value = String(Number(colsEl.value) || 10);
+      tilesBasePathEl.value = String(boardResp?.board?.tilesBasePath || "tiles");
+
+      selectedId = 0;
+
+      wireNavButtons();
+      setHeaderMeta();
+      renderGrid();
+      renderTileEditor();
+      setStatus("Loaded.");
+    } catch (e){
+      console.error(e);
+      setStatus("Load failed: " + (e?.message || String(e)));
+    }
   };
 
-  autoImagesBtn.onclick = () => {
-    if (serverLocked === true) return;
+  colsEl.onchange = () => renderGrid();
 
-    board.tilesBasePath = tilesBasePathEl.value.trim() || "tiles";
-    for (const t of board.tiles) {
-      if (!t.image || !String(t.image).trim()) t.image = `${t.id}.png`;
-    }
-    setStatus("Auto image names applied to overrides.");
-    renderAll();
+  tilesBasePathEl.onchange = () => {
+    if (boardResp?.board) boardResp.board.tilesBasePath = (tilesBasePathEl.value || "tiles").trim() || "tiles";
+    renderTileEditor();
   };
 
-  // Make type stick instantly
-  typeEl.onchange = () => {
-    if (selectedId === null) return;
-    if (serverLocked === true) return;
+  applyTileBtn.onclick = () => {
+    if (!boardResp?.board) return;
 
-    const id = selectedId;
-    const type = (typeEl.value || "task").toLowerCase();
-    jumpWrapEl.style.display = (type === "jump") ? "block" : "none";
+    const id = Number(t_id.value || "");
+    if (!Number.isFinite(id)) return;
+
+    const type = (t_type.value || "task").trim();
 
     const tile = {
       id,
       type,
-      title: titleEl.value.trim(),
-      description: descriptionEl.value.trim(),
-      image: imageEl.value.trim()
+      title: (t_title.value || "").trim(),
+      description: (t_desc.value || "").trim(),
+      category: (t_cat.value || "").trim() || undefined,
+      requiresProof: (t_proof.value === "true"),
+      jumpTo: (t_jumpTo.value.trim() === "" ? undefined : Number(t_jumpTo.value)),
+      image: (t_img.value || "").trim() || undefined
     };
 
-    const category = categoryEl.value.trim();
-    if (category) tile.category = category;
+    if (!Number.isFinite(tile.jumpTo)) tile.jumpTo = undefined;
+    if (type !== "jump") tile.jumpTo = undefined;
 
-    const rp = requiresProofEl.value;
-    if (rp === "true") tile.requiresProof = true;
-    else if (rp === "false") tile.requiresProof = false;
+    if (!tile.title) delete tile.title;
+    if (!tile.description) delete tile.description;
+    if (!tile.image) delete tile.image;
 
-    if (type === "jump") {
-      const jRaw = jumpToEl.value.trim();
-      if (jRaw) {
-        const j = Number(jRaw);
-        if (Number.isFinite(j)) tile.jumpTo = j;
-      }
-    }
-
-    upsertTileOverride(tile);
-    setStatus(`Type saved as "${type}" for tile ${id}.`);
-    renderAll();
+    upsertTile(tile);
+    renderGrid();
+    renderTileEditor();
+    setStatus(`Tile ${id} updated (local). Click Save Board to persist.`);
   };
 
-  // Fix: never re-render editor while typing; preview only
-  imageEl.addEventListener("input", () => renderPreviewFromFieldValue());
-
-  clonePrevBtn.onclick = () => {
-    if (selectedId === null || selectedId <= 0) return;
-    if (serverLocked === true) return;
-
-    const prev = getTileEffective(selectedId - 1);
-    titleEl.value = prev.title || "";
-    descriptionEl.value = prev.description || "";
-    imageEl.value = prev.image || "";
-    categoryEl.value = prev.category || "";
-    setStatus("Cloned previous tile fields.");
-    renderPreviewFromFieldValue();
-  };
-
-  saveTileBtn.onclick = () => {
+  resetTileBtn.onclick = () => {
     if (selectedId === null) return;
-    if (serverLocked === true) return;
-
-    const id = selectedId;
-    const type = (typeEl.value || "task").toLowerCase();
-
-    const title = titleEl.value.trim();
-    const description = descriptionEl.value.trim();
-    const image = imageEl.value.trim();
-    const category = categoryEl.value.trim();
-
-    let requiresProof;
-    const rp = requiresProofEl.value;
-    if (rp === "true") requiresProof = true;
-    else if (rp === "false") requiresProof = false;
-    else requiresProof = undefined;
-
-    let jumpTo;
-    if (type === "jump") {
-      const j = Number(jumpToEl.value);
-      if (!Number.isFinite(j) || j < 0 || j > board.boardSize) {
-        setStatus("jumpTo must be 0..boardSize.");
-        return;
-      }
-      jumpTo = j;
-    }
-
-    deleteTileOverride(id);
-
-    const tile = { id, type, title, description, image };
-    if (category) tile.category = category;
-    if (typeof requiresProof === "boolean") tile.requiresProof = requiresProof;
-    if (type === "jump") tile.jumpTo = jumpTo;
-
-    board.tiles.push(tile);
-    normalizeBoard();
-
-    setStatus(`Saved override for tile ${id}.`);
-    renderAll();
+    deleteTile(selectedId);
+    renderGrid();
+    renderTileEditor();
+    setStatus(`Tile ${selectedId} reset to default (local). Click Save Board to persist.`);
   };
 
-  deleteTileBtn.onclick = () => {
-    if (selectedId === null) return;
-    if (serverLocked === true) return;
-
-    deleteTileOverride(selectedId);
-    normalizeBoard();
-    setStatus(`Deleted override for tile ${selectedId}.`);
-    renderAll();
-  };
-
-  // OPTIONAL: seed from URL
-  loadBtn.onclick = async () => {
-    const url = boardUrlEl.value.trim();
-    if (!url) { setStatus("Enter a URL to load."); return; }
+  saveBtn.onclick = async () => {
+    const gid = getGameId();
+    if (!gid || !boardResp?.board) return;
 
     try {
-      setStatus("Loading from URL...");
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      board = await res.json();
-      normalizeBoard();
-      selectedId = null;
-      setStatus("Loaded from URL.");
-      renderAll();
-    } catch (e) {
+      setStatus("Saving...");
+      boardResp.board.tilesBasePath = (tilesBasePathEl.value || "tiles").trim() || "tiles";
+      await saveBoardOnce(gid);
+      await loadBoardOnce(gid);
+      setHeaderMeta();
+      setStatus("Saved.");
+    } catch (e){
       console.error(e);
-      setStatus("Load URL failed: " + (e?.message || String(e)));
+      setStatus("Save failed: " + (e?.message || String(e)));
     }
   };
 
-  // -------------------- SERVER (OPTION B) --------------------
-  serverLoadBtn.onclick = async () => {
-    const url = boardEndpoint();
-    if (!url) { setStatus("Enter Game ID first."); return; }
+  toggleLockBtn.onclick = async () => {
+    const gid = getGameId();
+    if (!gid) return;
 
     try {
-      setStatus("Loading board from server...");
-      const data = await httpJson("GET", url);
-      if (!data || !data.board) {
-        setStatus("Server returned no board.");
-        setLockUI(data?.locked ?? null);
-        return;
-      }
-
-      board = safeJsonClone(data.board);
-      normalizeBoard();
-      selectedId = null;
-
-      setLockUI(!!data.locked);
-      setStatus("Loaded from server.");
-      renderAll();
-    } catch (e) {
+      setStatus("Toggling lock...");
+      await toggleLockOnce(gid);
+      await loadBoardOnce(gid);
+      setHeaderMeta();
+      setStatus("Lock updated.");
+    } catch (e){
       console.error(e);
-      setStatus("Load Server failed: " + (e?.message || String(e)));
+      setStatus("Lock toggle failed: " + (e?.message || String(e)));
     }
   };
 
-  serverSaveBtn.onclick = async () => {
-    const url = boardEndpoint();
-    if (!url) { setStatus("Enter Game ID first."); return; }
+  // ---------- init ----------
+  apiBaseEl.value = ""; // same-origin default
+  const qpGameId = qsGet("gameId");
+  if (qpGameId) gameIdEl.value = qpGameId;
 
-    const hostPw = (hostPasswordEl.value || "").trim();
-    if (!hostPw) { setStatus("Enter Host Password to save."); return; }
+  wireNavButtons();
+  setHeaderMeta();
 
-    try {
-      normalizeBoard();
-      setStatus("Saving board to server...");
-      await httpJson("PUT", url, board, { "x-host-password": hostPw });
-      setStatus("Saved to server.");
-    } catch (e) {
-      console.error(e);
-      setStatus("Save Server failed: " + (e?.message || String(e)));
-    }
-  };
-
-  lockBtn.onclick = async () => {
-    const url = boardEndpoint();
-    if (!url) { setStatus("Enter Game ID first."); return; }
-    const hostPw = (hostPasswordEl.value || "").trim();
-    if (!hostPw) { setStatus("Enter Host Password to lock."); return; }
-
-    try {
-      setStatus("Locking board...");
-      const lockUrl = url.replace(/\/board$/, "/board/lock");
-      const data = await httpJson("POST", lockUrl, {}, { "x-host-password": hostPw });
-      setLockUI(data?.locked ?? true);
-      setStatus("Board locked.");
-      renderAll();
-    } catch (e) {
-      console.error(e);
-      setStatus("Lock failed: " + (e?.message || String(e)));
-    }
-  };
-
-  unlockBtn.onclick = async () => {
-    const url = boardEndpoint();
-    if (!url) { setStatus("Enter Game ID first."); return; }
-    const hostPw = (hostPasswordEl.value || "").trim();
-    if (!hostPw) { setStatus("Enter Host Password to unlock."); return; }
-
-    try {
-      setStatus("Unlocking board...");
-      const unlockUrl = url.replace(/\/board$/, "/board/unlock");
-      const data = await httpJson("POST", unlockUrl, {}, { "x-host-password": hostPw });
-      setLockUI(data?.locked ?? false);
-      setStatus("Board unlocked.");
-      renderAll();
-    } catch (e) {
-      console.error(e);
-      setStatus("Unlock failed: " + (e?.message || String(e)));
-    }
-  };
-
-  // -------------------- INIT --------------------
-  apiBaseEl.value = ""; // same-origin by default
-  setLockUI(null);
-
-  normalizeBoard();
-  renderAll();
+  if (qpGameId) {
+    loadBtn.click();
+  } else {
+    setStatus("Ready. Enter a Game ID and click Load.");
+  }
 </script>
 </body>
 </html>
+

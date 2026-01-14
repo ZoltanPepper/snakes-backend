@@ -2,211 +2,415 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Snakes & Ladders</title>
-
   <style>
-    :root { --bg:#0b0f14; --panel:#121a22; --muted:#7f93aa; --text:#e7eef7; --accent:#66d9ff; }
-    * { box-sizing:border-box; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-    body { margin:0; background:var(--bg); color:var(--text); }
-
-    header {
-      padding:16px;
-      border-bottom:1px solid #1d2a38;
-      text-align:center;
+    :root{
+      --bg:#0b0f14; --panel:#121a22; --panel2:#0e141c;
+      --border:#1b2a38; --border2:#2a3b4d;
+      --text:#e7eef7; --muted:#9fb2c7;
+      --accent:#66d9ff; --danger:#ff5c5c;
+      --ok:#7CFF9B; --warn:#FFB86B;
     }
-    header h1 { margin:0; font-size:18px; }
+    *{box-sizing:border-box;font-family:system-ui,Segoe UI,Roboto,Arial}
+    body{margin:0;background:var(--bg);color:var(--text)}
+    .wrap{max-width:1100px;margin:0 auto;padding:20px}
+    h1{margin:0 0 6px}
+    .sub{color:var(--muted);font-size:13px;margin:0 0 14px}
 
-    .wrap {
-      max-width:960px;
-      margin:0 auto;
-      padding:20px;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:20px;
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      margin-bottom:14px;
     }
 
-    .panel {
+    details.advanced{
+      background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;flex:1;min-width:320px;
+    }
+    details.advanced summary{
+      cursor:pointer;user-select:none;color:var(--muted);font-size:13px;
+      list-style:none;
+    }
+    details.advanced summary::-webkit-details-marker{display:none}
+    .advRow{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+    .advRow input{
+      flex:1;min-width:260px;padding:10px;border-radius:10px;border:1px solid var(--border2);
+      background:var(--panel2);color:var(--text);
+    }
+    .hint{color:var(--muted);font-size:12px;margin-top:6px}
+
+    .grid2{
+      display:grid;grid-template-columns:1fr 1fr;gap:14px;
+    }
+    @media (max-width: 980px){
+      .grid2{grid-template-columns:1fr}
+    }
+
+    .card{
       background:var(--panel);
-      border:1px solid #1d2a38;
-      border-radius:14px;
+      border:1px solid var(--border);
+      border-radius:12px;
       padding:16px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
     }
+    .card h2{margin:0 0 10px}
 
-    h2 { margin:0 0 6px; font-size:16px; }
-
-    label { font-size:12px; color:var(--muted); }
-    input, button, select {
-      background:#0e141c;
-      color:var(--text);
-      border:1px solid #223244;
-      border-radius:10px;
-      padding:8px 10px;
-      outline:none;
+    label{display:block;margin:0 0 6px;color:var(--muted);font-size:13px}
+    input,button{
       width:100%;
-    }
-
-    button.primary {
-      background:#0d2630;
-      border-color:#2a5666;
-      cursor:pointer;
-    }
-
-    button.secondary {
-      background:#0e141c;
-      cursor:pointer;
-    }
-
-    button:disabled { opacity:.6; cursor:not-allowed; }
-
-    .muted { color:var(--muted); font-size:12px; }
-    .row { display:flex; gap:8px; }
-    .status { font-size:12px; min-height:16px; }
-
-    footer {
-      border-top:1px solid #1d2a38;
       padding:10px;
-      text-align:center;
-      font-size:12px;
-      color:var(--muted);
+      border-radius:10px;
+      border:1px solid var(--border2);
+      background:var(--panel2);
+      color:var(--text);
+      outline:none;
     }
-    footer a { color:var(--accent); text-decoration:none; }
+    button{
+      cursor:pointer;
+      background:#1a2a38;
+      border-color:#2a5666;
+      font-weight:700;
+    }
+    button:hover{filter:brightness(1.06)}
+    button.secondary{
+      background:var(--panel2);
+      border-color:var(--border2);
+      font-weight:600;
+    }
+
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width: 520px){ .row2{grid-template-columns:1fr} }
+
+    .stack{display:flex;flex-direction:column;gap:12px}
+    .inline{display:flex;gap:10px;align-items:center}
+    .inline > *{flex:1}
+
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace}
+    .pill{
+      display:inline-block;padding:2px 8px;border:1px solid var(--border2);
+      border-radius:999px;color:var(--muted);font-size:12px
+    }
+    .success{color:var(--ok)}
+    .warn{color:var(--warn)}
+    .err{color:var(--danger)}
+
+    .resultBox{
+      margin-top:12px;
+      background:var(--panel2);
+      border:1px solid var(--border2);
+      border-radius:12px;
+      padding:12px;
+    }
+    .smallbtn{padding:10px}
+    .gamesList .gameCard{
+      margin-top:10px;
+      background:var(--panel2);
+      border:1px solid var(--border2);
+      border-radius:12px;
+      padding:12px;
+    }
+    .gameTop{
+      display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;
+    }
   </style>
 </head>
-
 <body>
-<header>
-  <h1>Snakes &amp; Ladders</h1>
-  <div class="muted">Create or join a game</div>
-</header>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h1>Snakes &amp; Ladders</h1>
+        <p class="sub">Create games and manage teams on the website. RuneLite only connects once you have a game id.</p>
+      </div>
 
-<div class="wrap">
+      <!-- Advanced (keeps API base without a big "Connection" block) -->
+      <details class="advanced">
+        <summary>Advanced (optional)</summary>
+        <div class="advRow">
+          <input id="apiBase" placeholder="API Base (leave blank for same-origin) e.g. http://127.0.0.1:8787" />
+        </div>
+        <div class="hint">If you are hosting this page from the same backend, leave it blank.</div>
+      </details>
+    </div>
 
-  <!-- CREATE GAME -->
-  <div class="panel">
-    <h2>Create Game</h2>
+    <div class="grid2">
+      <!-- LEFT: CREATE -->
+      <div class="card">
+        <h2>Create a Game</h2>
 
-    <label>Clan Name</label>
-    <input id="c_clan" placeholder="Sixth Degree" />
+        <div class="stack">
+          <div class="row2">
+            <div>
+              <label>Clan name</label>
+              <input id="c_clan" placeholder="Sixth Degree" />
+            </div>
+            <div>
+              <label>Display name (shown in Join list)</label>
+              <input id="c_display" placeholder="Christmas Snakes 2026" />
+            </div>
+          </div>
 
-    <label>Admin Password</label>
-    <input id="c_pass" type="password" placeholder="Used to edit the board" />
+          <div class="row2">
+            <div>
+              <label>Admin password</label>
+              <input id="c_pass" type="password" placeholder="hostPassword" />
+            </div>
+            <div>
+              <label>Board size</label>
+              <input id="c_size" type="number" value="100" min="10" max="500" />
+            </div>
+          </div>
 
-    <label>Board Size</label>
-    <input id="c_size" type="number" min="10" max="500" value="30" />
+          <div class="row2">
+            <div>
+              <label>Start Date (UTC)</label>
+              <input id="c_start" placeholder="DD/MM/YYYY HH:MM (e.g. 02/01/2026 18:00)" />
+              <div class="hint">UK format. Leave blank for “start now”.</div>
+            </div>
+            <div>
+              <label>End Date (UTC)</label>
+              <input id="c_end" placeholder="DD/MM/YYYY HH:MM (e.g. 09/01/2026 18:00)" />
+              <div class="hint">UK format. Leave blank for “no end”.</div>
+            </div>
+          </div>
 
-    <label>Start Time (optional)</label>
-    <input id="c_start" type="datetime-local" />
+          <button id="btnCreate">Create Game</button>
+          <p id="createMsg" class="sub" style="margin:0"></p>
 
-    <label>End Time (optional)</label>
-    <input id="c_end" type="datetime-local" />
+          <div id="createResult" class="resultBox" style="display:none;">
+            <div class="hint">Give this to your clan (this stops randoms joining):</div>
+            <div class="inline" style="margin-top:8px">
+              <input id="outJoinCode" class="mono" readonly />
+              <button class="smallbtn secondary" id="copyJoin">Copy</button>
+            </div>
 
-    <button class="primary" id="createBtn">Create Game</button>
-    <div class="status muted" id="createStatus"></div>
+            <div class="hint" style="margin-top:10px">Game ID (needed for RuneLite + direct viewer links):</div>
+            <div class="inline" style="margin-top:8px">
+              <input id="outGameId" class="mono" readonly />
+              <button class="smallbtn secondary" id="copyGameId">Copy</button>
+            </div>
+
+            <div class="inline" style="margin-top:10px">
+              <button id="openEditor" class="secondary">Open Editor</button>
+              <button id="openViewer" class="secondary">Open Board Viewer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: JOIN -->
+      <div class="card">
+        <h2>Join a Game</h2>
+
+        <div class="stack">
+          <div>
+            <label>Clan name</label>
+            <div class="inline">
+              <input id="j_clan" placeholder="Sixth Degree" />
+              <button id="btnFind" class="smallbtn">Find Games</button>
+            </div>
+            <div class="hint">Games shown here do <b>not</b> reveal the game id.</div>
+          </div>
+
+          <div id="gamesList" class="gamesList"></div>
+
+          <div id="resolveBox" style="display:none;">
+            <label>Enter join code (from clan/admin)</label>
+            <div class="inline">
+              <input id="j_code" class="mono" placeholder="8-char code" />
+              <button id="btnResolve" class="smallbtn">Continue</button>
+            </div>
+            <p id="joinMsg" class="sub" style="margin:0"></p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- JOIN GAME -->
-  <div class="panel">
-    <h2>Join Game</h2>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const API_BASE_FALLBACK = "http://127.0.0.1:8787"; // local dev convenience
 
-    <label>Clan Name</label>
-    <input id="j_clan" placeholder="Sixth Degree" />
+    function safe(v){ return (v ?? "").toString().trim(); }
 
-    <button class="secondary" id="findGamesBtn">Find Games</button>
-
-    <label>Available Games</label>
-    <select id="gamesList" disabled>
-      <option value="">—</option>
-    </select>
-
-    <label>Game ID</label>
-    <input id="j_gameId" placeholder="game_..." />
-
-    <button class="primary" id="joinBtn">View Game</button>
-    <div class="status muted" id="joinStatus"></div>
-  </div>
-
-</div>
-
-<footer>
-  For support visit <a href="https://discord.gg/6Degree" target="_blank">Discord.gg/6Degree</a>
-</footer>
-
-<script>
-  const el = (id) => document.getElementById(id);
-  const apiBase = ""; // same-origin
-
-  async function httpJson(method, url, body) {
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type":"application/json" },
-      body: body ? JSON.stringify(body) : undefined
-    });
-    const txt = await res.text();
-    let data = null;
-    try { data = JSON.parse(txt); } catch {}
-    if (!res.ok) throw new Error(data?.error || txt || res.status);
-    return data;
-  }
-
-  // CREATE GAME
-  el("createBtn").onclick = async () => {
-    try {
-      el("createStatus").textContent = "Creating game...";
-      const body = {
-        clanName: el("c_clan").value.trim(),
-        hostPassword: el("c_pass").value,
-        boardSize: Number(el("c_size").value),
-        startsAt: el("c_start").value ? new Date(el("c_start").value).toISOString() : undefined,
-        endsAt: el("c_end").value ? new Date(el("c_end").value).toISOString() : undefined
-      };
-
-      const res = await httpJson("POST", apiBase + "/games", body);
-      window.location.href = `/editor.html?gameId=${encodeURIComponent(res.gameId)}`;
-    } catch (e) {
-      el("createStatus").textContent = "Error: " + e.message;
+    function getApiBase(){
+      const v = safe($("apiBase").value);
+      if (v) return v.replace(/\/+$/, "");
+      // if same-origin hosting, empty is correct.
+      // BUT: if you're opening index.html as a file:// or from a different host, you may want fallback.
+      // We'll only fallback if page is not http(s).
+      const proto = location.protocol;
+      if (proto !== "http:" && proto !== "https:") return API_BASE_FALLBACK;
+      return ""; // same-origin
     }
-  };
 
-  // FIND GAMES BY CLAN
-  el("findGamesBtn").onclick = async () => {
-    try {
-      el("joinStatus").textContent = "Searching...";
-      const clan = el("j_clan").value.trim();
-      const res = await httpJson("GET", apiBase + `/clans/${encodeURIComponent(clan)}/games`);
-      const sel = el("gamesList");
-      sel.innerHTML = '<option value="">—</option>';
+    async function api(path, opts){
+      const base = getApiBase();
+      const url = (base ? base : "") + path;
 
-      res.games.forEach(g => {
-        const o = document.createElement("option");
-        o.value = g.id;
-        o.textContent = `${g.id} (${g.status})`;
-        sel.appendChild(o);
-      });
-
-      sel.disabled = false;
-      el("joinStatus").textContent = res.games.length ? "Select a game." : "No games found.";
-    } catch (e) {
-      el("joinStatus").textContent = "Error: " + e.message;
+      const res = await fetch(url, opts);
+      const text = await res.text();
+      let json = null;
+      try { json = text ? JSON.parse(text) : null; } catch {}
+      if (!res.ok) {
+        const msg = (json && (json.error || json.message)) ? (json.error || json.message) : text;
+        throw new Error(msg || ("HTTP " + res.status));
+      }
+      return json;
     }
-  };
 
-  el("gamesList").onchange = () => {
-    el("j_gameId").value = el("gamesList").value;
-  };
-
-  // VIEW GAME
-  el("joinBtn").onclick = () => {
-    const gid = el("j_gameId").value.trim();
-    if (!gid) {
-      el("joinStatus").textContent = "Enter a Game ID.";
-      return;
+    function copyToClipboard(value){
+      navigator.clipboard.writeText(value).catch(()=>{});
     }
-    window.location.href = `/viewer.html?gameId=${encodeURIComponent(gid)}`;
-  };
-</script>
+
+    // Parse "DD/MM/YYYY HH:MM" as UTC and return ISO string (Z)
+    function parseUkUtcToIso(s){
+      const t = safe(s);
+      if (!t) return undefined;
+
+      const m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))$/);
+      if (!m) throw new Error("Use UK format: DD/MM/YYYY HH:MM (e.g. 02/01/2026 18:00)");
+
+      const dd = Number(m[1]);
+      const mm = Number(m[2]);
+      const yyyy = Number(m[3]);
+      const hh = Number(m[4]);
+      const min = Number(m[5]);
+
+      const ms = Date.UTC(yyyy, mm - 1, dd, hh, min, 0);
+      const d = new Date(ms);
+
+      // Basic validation (catches invalid dates like 32/01/2026)
+      if (d.getUTCFullYear() !== yyyy || (d.getUTCMonth()+1) !== mm || d.getUTCDate() !== dd) {
+        throw new Error("Invalid date. Use DD/MM/YYYY HH:MM");
+      }
+
+      return d.toISOString();
+    }
+
+    // CREATE
+    $("btnCreate").onclick = async () => {
+      $("createMsg").textContent = "Creating…";
+      $("createResult").style.display = "none";
+
+      try {
+        const startIso = safe($("c_start").value) ? parseUkUtcToIso($("c_start").value) : undefined;
+        const endIso   = safe($("c_end").value)   ? parseUkUtcToIso($("c_end").value)   : undefined;
+
+        const body = {
+          clanName: safe($("c_clan").value) || "Sixth Degree",
+          displayName: safe($("c_display").value) || undefined,
+          hostPassword: safe($("c_pass").value),
+          boardSize: Number(safe($("c_size").value) || "100"),
+          startsAt: startIso,
+          endsAt: endIso,
+        };
+
+        const out = await api("/games", {
+          method:"POST",
+          headers:{ "content-type":"application/json" },
+          body: JSON.stringify(body)
+        });
+
+        $("createMsg").innerHTML = `<span class="success">Game created.</span>`;
+        $("outJoinCode").value = out.joinCode || "";
+        $("outGameId").value = out.gameId || "";
+
+        $("createResult").style.display = "block";
+
+        $("copyJoin").onclick = () => copyToClipboard($("outJoinCode").value);
+        $("copyGameId").onclick = () => copyToClipboard($("outGameId").value);
+
+        $("openEditor").onclick = () => {
+          location.href = "editor.html?gameId=" + encodeURIComponent(out.gameId);
+        };
+
+        $("openViewer").onclick = () => {
+          location.href = "view.html?gameId=" + encodeURIComponent(out.gameId);
+        };
+
+      } catch (e) {
+        $("createMsg").innerHTML = `<span class="err">Create failed:</span> ${e.message}`;
+      }
+    };
+
+    // FIND GAMES (no gameId)
+    let lastClan = "";
+    $("btnFind").onclick = async () => {
+      $("gamesList").innerHTML = "";
+      $("resolveBox").style.display = "none";
+      $("joinMsg").textContent = "";
+
+      const clan = safe($("j_clan").value);
+      lastClan = clan;
+
+      if (!clan){
+        $("gamesList").innerHTML = `<div class="err">Enter a clan name.</div>`;
+        return;
+      }
+
+      $("gamesList").innerHTML = `<div class="hint">Searching…</div>`;
+
+      try {
+        const data = await api("/clans/" + encodeURIComponent(clan) + "/games", { method:"GET" });
+
+        const games = data.games || [];
+        if (!games.length) {
+          $("gamesList").innerHTML = `<div class="warn">No games found for that clan.</div>`;
+          return;
+        }
+
+        $("gamesList").innerHTML = "";
+        games.forEach((g) => {
+          const div = document.createElement("div");
+          div.className = "gameCard";
+
+          div.innerHTML = `
+            <div class="gameTop">
+              <div style="min-width:220px">
+                <div><b>${(g.displayName || "Clan Game")}</b> <span class="pill">${g.status}</span></div>
+                <div class="hint">Board size: ${g.boardSize ?? "-"}</div>
+              </div>
+              <button class="smallbtn">Join</button>
+            </div>
+          `;
+
+          div.querySelector("button").onclick = () => {
+            $("resolveBox").style.display = "block";
+            $("joinMsg").innerHTML = `Selected: <b>${(g.displayName || "Clan Game")}</b>. Enter join code to continue.`;
+            $("j_code").focus();
+          };
+
+          $("gamesList").appendChild(div);
+        });
+
+      } catch (e) {
+        $("gamesList").innerHTML = `<div class="err">Error: ${e.message}</div>`;
+      }
+    };
+
+    // RESOLVE (clan + joinCode => gameId)
+    $("btnResolve").onclick = async () => {
+      $("joinMsg").textContent = "Checking code…";
+
+      const clan = safe(lastClan || $("j_clan").value);
+      const joinCode = safe($("j_code").value);
+
+      if (!clan || !joinCode) {
+        $("joinMsg").innerHTML = `<span class="err">Clan and join code required.</span>`;
+        return;
+      }
+
+      try {
+        const out = await api("/games/resolve", {
+          method:"POST",
+          headers:{ "content-type":"application/json" },
+          body: JSON.stringify({ clanName: clan, joinCode })
+        });
+
+        location.href = "view.html?gameId=" + encodeURIComponent(out.gameId);
+
+      } catch (e) {
+        $("joinMsg").innerHTML = `<span class="err">Code invalid:</span> ${e.message}`;
+      }
+    };
+  </script>
 </body>
 </html>

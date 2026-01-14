@@ -16,7 +16,7 @@ export async function createDb() {
     ? new SQL.Database(new Uint8Array(fs.readFileSync(DB_FILE)))
     : new SQL.Database();
 
-  // ---- base schema ----
+  // ---- base schema (new DBs get everything) ----
   db.run(`
     CREATE TABLE IF NOT EXISTS games (
       id TEXT PRIMARY KEY,
@@ -29,7 +29,9 @@ export async function createDb() {
       discord_webhook_url TEXT NULL,
       board_url TEXT NULL,
       starts_at TEXT NULL,
-      ends_at TEXT NULL
+      ends_at TEXT NULL,
+      display_name TEXT NULL,
+      join_code_hash TEXT NULL
     );
 
     CREATE TABLE IF NOT EXISTS teams (
@@ -92,30 +94,27 @@ export async function createDb() {
       updated_at TEXT NOT NULL
     );
 
-    -- indexes (safe no-ops if they already exist)
     CREATE INDEX IF NOT EXISTS idx_teams_game_teamindex ON teams(game_id, team_index);
     CREATE INDEX IF NOT EXISTS idx_regs_game_team ON registrations(game_id, team_id);
   `);
 
   // ---- lightweight migrations for older DBs ----
   // sql.js SQLite doesn't support "ADD COLUMN IF NOT EXISTS", so try and ignore errors.
-  // Keep order consistent with schema.
-  try {
-    db.run("ALTER TABLE games ADD COLUMN board_url TEXT NULL;");
-  } catch {}
 
-  try {
-    db.run("ALTER TABLE games ADD COLUMN starts_at TEXT NULL;");
-  } catch {}
-
-  try {
-    db.run("ALTER TABLE games ADD COLUMN ends_at TEXT NULL;");
-  } catch {}
+  try { db.run("ALTER TABLE games ADD COLUMN board_url TEXT NULL;"); } catch {}
+  try { db.run("ALTER TABLE games ADD COLUMN starts_at TEXT NULL;"); } catch {}
+  try { db.run("ALTER TABLE games ADD COLUMN ends_at TEXT NULL;"); } catch {}
+  try { db.run("ALTER TABLE games ADD COLUMN display_name TEXT NULL;"); } catch {}
+  try { db.run("ALTER TABLE games ADD COLUMN join_code_hash TEXT NULL;"); } catch {}
 
   function persist() {
     const data = db.export();
     fs.writeFileSync(DB_FILE, Buffer.from(data));
   }
+
+  // IMPORTANT: persist immediately after successful migrations so future boots are clean
+  // (This prevents “no such column” on next run if the process exits early.)
+  persist();
 
   return { db, persist };
 }
