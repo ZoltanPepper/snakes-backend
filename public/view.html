@@ -155,7 +155,7 @@
 
   <div class="row" style="width:100%;">
     <!-- ✅ changed: Create now goes to index -->
-    <button class="primary" id="editorBtn">Create / Set Up</button>
+    <button class="primary" id="editorBtn">Create a game</button>
     <button id="openEditorBtn" disabled>Open Editor</button>
     <button id="backIndexBtn">Back to Index</button>
 
@@ -641,9 +641,16 @@
   function renderEditorButtons() {
     const gid = getGameId();
 
-    // Create/Set Up always goes to index (your requirement)
-    editorBtn.textContent = "Create / Set Up";
-    editorBtn.onclick = () => { window.location.href = "/index.html"; };
+    // Create/Set Up goes to index when no gameId, edit board when set
+    if (gid) {
+      editorBtn.textContent = "Edit board";
+      editorBtn.onclick = () => {
+        window.location.href = `/editor.html?gameId=${encodeURIComponent(gid)}`;
+      };
+    } else {
+      editorBtn.textContent = "Create a game";
+      editorBtn.onclick = () => { window.location.href = "/index.html"; };
+    }
 
     // Open editor only when we have a gameId
     openEditorBtn.disabled = !gid;
